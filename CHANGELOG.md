@@ -6,13 +6,11 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 ---
 
-## [1.1.0] — 2026-03-05 🍌+ First Plus Release — Per-call Model Switching, Aspect Ratio & Imagen 4
-
-This is the first release of **nanobanana-plus**, forked from the original [nanobanana](https://github.com/gemini-cli-extensions/nanobanana) (Apache 2.0) with key enhancements the community has been asking for.
+## [1.2.0] — 2026-03-05 🍌+ Imagen 4 Upgrade & predict API
 
 ### ✨ Added
 
-#### �️ Imagen 4 Ultra & Fast Support (via predict REST API)
+#### 🖼️ Imagen 4 Ultra & Fast Support (via predict REST API)
 
 Full support for the next-generation Imagen 4 models, utilizing direct `predict` REST API payload structures.
 
@@ -20,7 +18,15 @@ Full support for the next-generation Imagen 4 models, utilizing direct `predict`
 - `imagen-4.0-fast-generate-001`: Incredible speed and quality combined.
 *(Note: Requires a Gemini API Key with Pro access; OAuth/ADC is not supported for predict models).*
 
-#### �🔀 Per-call Model Switching (addresses [nanobanana#44](https://github.com/gemini-cli-extensions/nanobanana/issues/44))
+---
+
+## [1.1.0] — 2026-03-05 🍌+ First Plus Release — Per-call Model Switching + Aspect Ratio
+
+This is the first release of **nanobanana-plus**, forked from the original [nanobanana](https://github.com/gemini-cli-extensions/nanobanana) (Apache 2.0) with key enhancements the community has been asking for.
+
+### ✨ Added
+
+#### 🔀 Per-call Model Switching (addresses [nanobanana#44](https://github.com/gemini-cli-extensions/nanobanana/issues/44))
 
 The most-requested feature in the nanobanana community. Previously, switching models required restarting the MCP server via environment variable. Now you can specify the model **per call**:
 
@@ -39,8 +45,6 @@ Supported models:
 | `gemini-3.1-flash-image-preview` | Nano Banana 2 | ⚡ Default · Fast · Saves quota |
 | `gemini-3-pro-image-preview` | Nano Banana Pro | 🎨 High quality · Fine details |
 | `gemini-2.5-flash-image` | Nano Banana v1 | 🔄 Legacy compatibility |
-| `imagen-4.0-ultra-generate-001` | Imagen 4 Ultra | 💎 Top photorealism, Pro Key required |
-| `imagen-4.0-fast-generate-001` | Imagen 4 Fast | 🚀 Speed + quality, Pro Key required |
 
 #### 📐 Aspect Ratio Control
 
