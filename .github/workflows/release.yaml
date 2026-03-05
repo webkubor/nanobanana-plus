@@ -65,12 +65,22 @@ jobs:
       #   - Create a new release based on the tag you pushed.
       #   - Automatically generate release notes from your commits.
       #   - Upload the 'nanobanana-release.tar.gz' file as a release asset.
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          VERSION=$(echo ${{ github.ref_name }} | sed 's/v//')
+          # 提取当前版本的 CHANGELOG 内容（从 ## [x.x.x] 到下一个 ## 之间）
+          NOTES=$(awk "/^## \[${VERSION}\]/{found=1; next} found && /^## /{exit} found{print}" CHANGELOG.md)
+          # 写入临时文件（避免特殊字符问题）
+          echo "$NOTES" > /tmp/release_notes.md
+          echo "Extracted release notes for v${VERSION}"
+          cat /tmp/release_notes.md
+
       - name: Create GitHub Release and Upload Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create ${{ github.ref_name }} \
-             --generate-notes \
-             --title "Release ${{ github.ref_name }}" \
-             --notes "See the changelog for details." \
+             --title "v${{ github.ref_name }} 🍌+" \
+             --notes-file /tmp/release_notes.md \
              nanobanana-release.tar.gz
