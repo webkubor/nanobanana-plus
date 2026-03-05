@@ -97,6 +97,21 @@ class NanoBananaServer {
                   type: 'number',
                   description: 'Seed for reproducible variations',
                 },
+                model: {
+                  type: 'string',
+                  enum: [
+                    'gemini-3.1-flash-image-preview',
+                    'gemini-3-pro-image-preview',
+                    'gemini-2.5-flash-image',
+                  ],
+                  description:
+                    '模型选择（可选）: flash=快速省配额(默认) / pro=高质量 / v1=旧版兼容。不填则使用服务器默认模型。',
+                },
+                aspectRatio: {
+                  type: 'string',
+                  description:
+                    '宽高比（可选）: 如 "16:9"、"1:1"、"4:3"、"9:16"、"3:4"。不填则使用模型默认比例。',
+                },
                 preview: {
                   type: 'boolean',
                   description:
@@ -420,6 +435,8 @@ class NanoBananaServer {
               variations: args?.variations as string[],
               format: (args?.format as 'grid' | 'separate') || 'separate',
               seed: args?.seed as number,
+              model: args?.model as ImageGenerationRequest['model'],
+              aspectRatio: args?.aspectRatio as string,
               preview: args?.preview as boolean,
               noPreview:
                 (args?.noPreview as boolean) ||

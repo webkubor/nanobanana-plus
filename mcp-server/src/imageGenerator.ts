@@ -28,7 +28,14 @@ export class ImageGenerator {
     });
     this.modelName =
       process.env.NANOBANANA_MODEL || ImageGenerator.DEFAULT_MODEL;
-    console.error(`DEBUG - Using image model: ${this.modelName}`);
+    console.error(`DEBUG - Default image model: ${this.modelName}`);
+  }
+
+  // 解析每次请求实际使用的模型（per-call override 优先）
+  private resolveModel(request: ImageGenerationRequest): string {
+    const model = request.model || this.modelName;
+    console.error(`DEBUG - Resolved model for this call: ${model}`);
+    return model;
   }
 
   private async openImagePreview(filePath: string): Promise<void> {
@@ -257,15 +264,20 @@ export class ImageGenerator {
 
         try {
           // Make API call for each variation
+          const generateConfig: Record<string, unknown> = {};
+          if (request.aspectRatio) {
+            generateConfig['imageConfig'] = { aspectRatio: request.aspectRatio };
+          }
           const response = await this.ai.models.generateContent({
-            model: this.modelName,
+            model: this.resolveModel(request),
             contents: [
               {
                 role: 'user',
                 parts: [{ text: currentPrompt }],
               },
             ],
-          });
+            ...(Object.keys(generateConfig).length > 0 ? { config: generateConfig } : {}),
+          } as Parameters<typeof this.ai.models.generateContent>[0]);
 
           console.error('DEBUG - API Response structure for variation', i + 1);
 
@@ -444,7 +456,7 @@ export class ImageGenerator {
   
           try {
             const response = await this.ai.models.generateContent({
-              model: this.modelName,
+              model: this.resolveModel(request),
               contents: [
                 {
                   role: 'user',
@@ -567,7 +579,7 @@ export class ImageGenerator {
       );
 
       const response = await this.ai.models.generateContent({
-        model: this.modelName,
+        model: this.resolveModel(request),
         contents: [
           {
             role: 'user',

@@ -4,11 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export type NanoBananaModel =
+  | 'gemini-3.1-flash-image-preview'   // Nano Banana 2 — 快速，默认
+  | 'gemini-3-pro-image-preview'        // Nano Banana Pro — 高质量
+  | 'gemini-2.5-flash-image';           // Nano Banana v1 — 兼容旧版
+
 export interface ImageGenerationRequest {
   prompt: string;
   inputImage?: string;
   outputCount?: number;
   mode: 'generate' | 'edit' | 'restore';
+  // Model override (per-call)
+  model?: NanoBananaModel;
+  // Aspect ratio (e.g. "16:9", "1:1", "4:3", "9:16")
+  aspectRatio?: string;
   // Batch generation options
   styles?: string[];
   variations?: string[];
