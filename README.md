@@ -123,20 +123,37 @@ export NANOBANANA_MODEL=gemini-3-pro-image-preview
 
 ## 💡 示例对话 / Examples
 
-在 Gemini CLI 中直接用自然语言：
+在 Gemini CLI 中直接用自然语言，生成后会显示所用模型信息：
 
 ```
-🎨 高质量竖版图（Pro + 9:16）
-> 生成一张赛博朋克少女，霓虹灯雨夜，model=gemini-3-pro-image-preview，aspectRatio=9:16
+🎨 高质量竖版壁纸（Pro + 9:16）
+> 生成一张赛博朋克少女，霓虹灯雨夜，用 pro 模型，9:16 竖版
+
+✅ Successfully generated 1 image(s)
+🍌 Model: Nano Banana Pro 🎨 (gemini-3-pro-image-preview)
+📐 Aspect ratio: 9:16
+📁 Saved to: ~/Desktop/image.png
 ```
 
 ```
-⚡ 快速出 4 张草图（Flash 省配额）
-> 生成 4 张科幻飞船概念图
+⚡ 快速出 4 张草图（Flash 默认，省配额）
+> 用 nanobanana-plus 生成 4 张科幻飞船概念图
+
+✅ Successfully generated 4 image(s)
+🍌 Model: Nano Banana 2 ⚡ (gemini-3.1-flash-image-preview)
 ```
 
 ```
-🖼️ 多风格批量对比
+🖥️ 横版桌面壁纸（16:9）
+> 生成一张 16:9 的星空下雪山，写实风格
+
+✅ Successfully generated 1 image(s)
+🍌 Model: Nano Banana 2 ⚡ (gemini-3.1-flash-image-preview)
+📐 Aspect ratio: 16:9
+```
+
+```
+🖼️ 多风格批量对比（一次出 4 种）
 > 生成日落山景，同时出水彩、油画、写实照片、动漫四种风格
 ```
 
@@ -146,12 +163,12 @@ export NANOBANANA_MODEL=gemini-3-pro-image-preview
 ```
 
 ```
-🎯 生成 App 图标
+🎯 生成 App 图标（多尺寸）
 > 生成一个简洁的日历 App 图标，需要 64、128、256、512 尺寸
 ```
 
 ```
-📖 故事分镜
+📖 故事分镜序列
 > 生成《勇者的旅程》故事分镜，3 幕，赛博朋克风格
 ```
 
@@ -184,6 +201,32 @@ export GOOGLE_API_KEY="your_key"               # 备选
 | `generate_pattern` | 生成无缝平铺图案 |
 | `generate_story` | 生成连贯故事分镜图序列 |
 | `generate_diagram` | 生成流程图/架构图 |
+
+---
+
+## 🤝 Contributing / 共创
+
+**nanobanana-plus 欢迎共创！** / *Contributions welcome!*
+
+我们特别希望得到帮助的方向：
+
+- 🌍 **更多宽高比** — 测试并记录各模型支持的比例
+- 🎨 **风格预设** — 内置常用风格的 prompt 前缀（水墨、浮世绘、赛博朋克...）
+- 🔁 **模型对比模式** — 同一 prompt 同时用 flash + pro 出图，方便对比
+- 🌐 **中文文档完善** — 更好的中文错误提示和使用说明
+
+```bash
+git clone https://github.com/webkubor/nanobanana-plus
+cd nanobanana-plus/mcp-server
+npm install && npm run dev
+```
+
+核心文件：
+- `src/index.ts` — MCP Tool 定义（新增参数在这里）
+- `src/imageGenerator.ts` — API 调用逻辑（模型/宽高比处理）
+- `src/types.ts` — TypeScript 类型定义
+
+> 💬 发现 bug 或有功能建议？[提 Issue](https://github.com/webkubor/nanobanana-plus/issues) 欢迎任何反馈！
 
 ---
 

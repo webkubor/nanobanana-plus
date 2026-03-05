@@ -352,9 +352,16 @@ export class ImageGenerator {
       // Handle preview if requested
       await this.handlePreview(generatedFiles, request);
 
+      const usedModel = this.resolveModel(request);
+      const modelLabel = usedModel.includes('pro') ? 'Nano Banana Pro 🎨' :
+        usedModel.includes('3.1') ? 'Nano Banana 2 ⚡' : 'Nano Banana v1 🔄';
+
       return {
         success: true,
-        message: `Successfully generated ${generatedFiles.length} image variation(s)`,
+        message: `✅ Successfully generated ${generatedFiles.length} image(s)\n` +
+          `🍌 Model: ${modelLabel} (${usedModel})\n` +
+          (request.aspectRatio ? `📐 Aspect ratio: ${request.aspectRatio}\n` : '') +
+          `📁 Saved to: ${generatedFiles.join(', ')}`,
         generatedFiles,
       };
     } catch (error: unknown) {

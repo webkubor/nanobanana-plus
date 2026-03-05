@@ -5,8 +5,13 @@
   "mcpServers": {
     "nanobanana-plus": {
       "command": "node",
-      "args": ["${extensionPath}/mcp-server/dist/index.js"],
-      "env": {}
+      "args": [
+        "${extensionPath}/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "NANOBANANA_GEMINI_API_KEY": "AIzaSyDOgtlt7_aiphIkvOB7zO58BdiWIhg1AkU",
+        "GEMINI_API_KEY": "AIzaSyDOgtlt7_aiphIkvOB7zO58BdiWIhg1AkU"
+      }
     }
   },
   "contextFileName": "GEMINI.md"
