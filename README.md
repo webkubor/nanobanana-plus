@@ -22,16 +22,34 @@
 
 ## ⚡ Quick Start
 
+**方式一：一键配置（推荐新用户）**
+
+```bash
+# 自动引导申请 API Key、回填、写入环境变量
+git clone https://github.com/webkubor/nanobanana-plus
+bash nanobanana-plus/setup.sh
+```
+
+脚本会帮你：① 检测已有 key → ② 引导去 [Google AI Studio](https://aistudio.google.com/apikey) 申请 → ③ 粘贴回填 → ④ 自动写入 `~/.zshrc`
+
+---
+
+**方式二：手动配置**
+
 ```bash
 # 1. 安装扩展
 gemini extensions install https://github.com/webkubor/nanobanana-plus
 
-# 2. 设置 API Key
+# 2. 设置 API Key（在 https://aistudio.google.com/apikey 免费申请）
 export NANOBANANA_GEMINI_API_KEY="your_gemini_api_key"
+# 写入 ~/.zshrc 永久生效：
+echo 'export NANOBANANA_GEMINI_API_KEY="your_key"' >> ~/.zshrc
 
 # 3. 打开 Gemini CLI，直接对话生图
 gemini
 ```
+
+> 💡 **已用 Gemini CLI 登录过 Google 的用户无需配置 Key**，扩展会自动复用登录态。
 
 ```
 # 在 Gemini CLI 中输入：

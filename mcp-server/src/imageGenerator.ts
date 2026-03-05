@@ -23,9 +23,10 @@ export class ImageGenerator {
   private static readonly DEFAULT_MODEL = 'gemini-3.1-flash-image-preview';
 
   constructor(authConfig: AuthConfig) {
-    this.ai = new GoogleGenAI({
-      apiKey: authConfig.apiKey,
-    });
+    // apiKey 为空时不传，让 SDK 自动走 OAuth / ADC
+    this.ai = new GoogleGenAI(
+      authConfig.apiKey ? { apiKey: authConfig.apiKey } : {},
+    );
     this.modelName =
       process.env.NANOBANANA_MODEL || ImageGenerator.DEFAULT_MODEL;
     console.error(`DEBUG - Default image model: ${this.modelName}`);
@@ -134,10 +135,11 @@ export class ImageGenerator {
       return { apiKey: googleKey, keyType: 'GOOGLE_API_KEY' };
     }
 
-    throw new Error(
-      'ERROR: No valid API key found. Please set NANOBANANA_GEMINI_API_KEY, NANOBANANA_GOOGLE_API_KEY, GEMINI_API_KEY, or GOOGLE_API_KEY environment variable.\n' +
-        'For more details on authentication, visit: https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/authentication.md',
-    );
+    // 没有 API Key 时，降级走 OAuth / ADC（和 Gemini CLI 登录态共享）
+    // @google/genai SDK 在无 apiKey 时会自动寻找 Application Default Credentials
+    console.error('✓ No API key found, falling back to OAuth / ADC (Gemini CLI login)');
+    return { apiKey: '', keyType: 'GEMINI_API_KEY' };
+
   }
 
   private isValidBase64ImageData(data: string): boolean {
