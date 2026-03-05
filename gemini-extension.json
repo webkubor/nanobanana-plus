@@ -1,9 +1,9 @@
 {
-  "name": "image-switcher",
+  "name": "nanobanana-plus",
   "version": "1.0.0",
-  "description": "王爷定制图像生成扩展：支持 per-call 模型切换（flash/pro/v1）+ 宽高比控制。Fork 自 nanobanana，Apache 2.0。",
+  "description": "The first Gemini CLI extension with per-call Nano Banana 2 / Pro model switching + aspect ratio. No server restart needed.",
   "mcpServers": {
-    "image-switcher": {
+    "nanobanana-plus": {
       "command": "node",
       "args": ["${extensionPath}/mcp-server/dist/index.js"],
       "env": {}

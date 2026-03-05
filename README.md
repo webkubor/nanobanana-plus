@@ -1,478 +1,143 @@
-> [!NOTE]  
-> Nano Banana 2 (`gemini-3.1-flash-image-preview`) is now the default model (v1.0.11+)!
->
-> You can still use the Pro model by setting the `NANOBANANA_MODEL` environment variable to `gemini-3-pro-image-preview`.
+<div align="center">
 
-# Nano Banana - Gemini CLI Extension
+# 🍌+ nanobanana-plus
 
-A professional Gemini CLI extension for generating and manipulating images using the Nano Banana models.
+**首个支持 Nano Banana 2 / Pro 按次切换的 Gemini CLI 扩展**
 
-## ✨ Features
+*The first Gemini CLI extension with per-call Nano Banana 2 / Pro switching*
 
-- **🎨 Text-to-Image Generation**: Create stunning images from descriptive prompts
-- **✏️ Image Editing**: Modify existing images with natural language instructions
-- **🔧 Image Restoration**: Restore and enhance old or damaged photos
-- **📁 Smart File Management**: User-friendly filenames with automatic duplicate prevention
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-Extension-4285F4?logo=google)](https://geminicli.com/extensions/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 
-## 📋 Prerequisites
+</div>
 
-1. **Gemini CLI** installed and configured
-2. **Node.js 20+** and npm
-3. **API Key**: Set one of these environment variables:
-   - `NANOBANANA_GEMINI_API_KEY` (recommended for Gemini API key users who
-     normally authenticate to Gemini CLI using the "Login with Google" option)
-   - `NANOBANANA_GOOGLE_API_KEY` (recommended for Vertex API key users who
-     normally authenticate to Gemini CLI using the "Login with Google" option)
-   - `GEMINI_API_KEY` (fallback)
-   - `GOOGLE_API_KEY` (fallback)
+---
 
-For authentication setup, see the [official Gemini CLI documentation](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/authentication.md).
+> **Fork of [nanobanana](https://github.com/gemini-cli-extensions/nanobanana)** — 在原有全部功能基础上，实现了社区呼声最高的 [Issue #44](https://github.com/gemini-cli-extensions/nanobanana/issues/44)：无需重启，每次调用时动态切换模型。
 
-### Key Components
+---
 
-- **`index.ts`**: MCP server using `@modelcontextprotocol/sdk` for professional protocol handling
-- **`imageGenerator.ts`**: Handles all Gemini API interactions and response processing
-- **`fileHandler.ts`**: Manages file I/O, smart filename generation, and file searching
-- **`types.ts`**: Shared TypeScript interfaces for type safety
+## ✨ 相比 nanobanana 新增了什么 / What's New vs nanobanana
 
-## 🍌 Model Selection
+| 功能 | nanobanana | nanobanana-plus |
+|------|-----------|-----------------|
+| 文字生图 / Text-to-Image | ✅ | ✅ |
+| 图片编辑 / Image Editing | ✅ | ✅ |
+| 图片修复 / Restoration | ✅ | ✅ |
+| 图标生成 / Icon Generation | ✅ | ✅ |
+| 图案生成 / Pattern Generation | ✅ | ✅ |
+| 故事分镜 / Story Sequence | ✅ | ✅ |
+| 流程图 / Diagram | ✅ | ✅ |
+| **按次切换模型 / Per-call model switch** | ❌ 需重启 | ✅ **每次调用独立指定** |
+| **宽高比控制 / Aspect ratio** | ❌ | ✅ **16:9 / 1:1 / 9:16 等** |
 
-The following Nano Banana models are supported:
+---
 
-- `gemini-3.1-flash-image-preview` (Nano Banana 2 - **default**)
-- `gemini-3-pro-image-preview` (Nano Banana Pro)
-- `gemini-2.5-flash-image` (Nano Banana v1)
-
-The `gemini-3.1-flash-image-preview` model is the default. To use a different model, set the `NANOBANANA_MODEL` environment variable:
+## 🚀 安装 / Install
 
 ```bash
-# Example: Use Nano Banana Pro
+gemini extensions install https://github.com/webkubor/nanobanana-plus
+```
+
+---
+
+## 🍌 模型选择 / Model Selection
+
+每次调用时通过 `model` 参数指定，无需重启服务：
+
+| 参数值 | 模型 | 特点 |
+|--------|------|------|
+| `gemini-3.1-flash-image-preview` | Nano Banana 2 | ⚡ **默认** 快速，省配额 |
+| `gemini-3-pro-image-preview` | Nano Banana Pro | 🎨 高质量，细节丰富 |
+| `gemini-2.5-flash-image` | Nano Banana v1 | 🔄 旧版兼容 |
+
+不指定时使用默认 Flash 模型，也可通过环境变量设置全局默认：
+
+```bash
 export NANOBANANA_MODEL=gemini-3-pro-image-preview
-
-# Example: Use Nano Banana v1
-export NANOBANANA_MODEL=gemini-2.5-flash-image
 ```
 
-## 🚀 Installation
+---
 
-### 1. Install Extension
+## 📐 宽高比 / Aspect Ratio
 
-Install the extension using the `gemini extensions install` command:
+通过 `aspectRatio` 参数控制输出比例：
+
+| 值 | 用途 |
+|----|------|
+| `16:9` | 横版 / 桌面壁纸 |
+| `9:16` | 竖版 / 手机壁纸 / 小红书 |
+| `1:1` | 正方形 / 头像 |
+| `4:3` | 传统横版 |
+| `3:4` | 传统竖版 |
+
+---
+
+## 💡 使用示例 / Examples
 
 ```bash
-gemini extensions install https://github.com/gemini-cli-extensions/nanobanana
+# 高质量竖版图（Pro 模型 + 9:16）
+generate_image --prompt "赛博朋克少女，霓虹灯雨夜" \
+  --model gemini-3-pro-image-preview \
+  --aspectRatio "9:16"
+
+# 快速出 4 张草图（Flash 默认，省配额）
+generate_image --prompt "科幻飞船概念图" --count 4
+
+# 同一主题多风格对比
+generate_image --prompt "mountain at sunset" \
+  --styles "watercolor,oil-painting,photorealistic,anime"
+
+# 编辑已有图片
+edit_image --file "~/Desktop/photo.png" \
+  --prompt "把背景换成星空"
+
+# 生成 App 图标
+generate_icon --prompt "简洁的日历 App 图标" --sizes "64,128,256,512"
 ```
 
-### 2. Activate
+---
 
-Restart the Gemini CLI. The following commands will be available:
+## 📋 前置条件 / Prerequisites
 
-- `/generate` - Single or multiple image generation with style/variation options
-- `/edit` - Image editing
-- `/restore` - Image restoration
-- `/icon` - Generate app icons, favicons, and UI elements in multiple sizes
-- `/pattern` - Generate seamless patterns and textures for backgrounds
-- `/story` - Generate sequential images that tell a visual story or process
-- `/diagram` - Generate technical diagrams, flowcharts, and architectural mockups
-- `/nanobanana` - Natural language interface
+1. **Gemini CLI** 已安装并配置
+2. **Node.js 20+**
+3. **API Key** — 设置以下任一环境变量：
+   - `NANOBANANA_GEMINI_API_KEY`（推荐）
+   - `GEMINI_API_KEY`（fallback）
+   - `GOOGLE_API_KEY`（fallback）
 
-## 💡 Usage
+> 认证配置参考：[Gemini CLI 官方文档](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/authentication.md)
 
-The extension provides multiple command options for different use cases:
+---
 
-### 🎯 Specific Commands (Recommended)
+## 📦 完整工具列表 / All Tools
 
-**Generate Images:**
+| 工具 | 说明 |
+|------|------|
+| `generate_image` | 文字生图，支持多风格/多变体/模型切换/宽高比 |
+| `edit_image` | 基于文字编辑已有图片 |
+| `restore_image` | 修复/增强老照片 |
+| `generate_icon` | 生成 App 图标（多尺寸） |
+| `generate_pattern` | 生成无缝平铺图案 |
+| `generate_story` | 生成连贯故事分镜图序列 |
+| `generate_diagram` | 生成流程图 / 架构图 |
 
-```bash
-# Single image
-/generate "a watercolor painting of a fox in a snowy forest"
+---
 
-# Multiple variations with preview
-/generate "sunset over mountains" --count=3 --preview
+## 📄 许可证 / License
 
-# Style variations
-/generate "mountain landscape" --styles="watercolor,oil-painting" --count=4
+Apache License 2.0 — Fork of [nanobanana](https://github.com/gemini-cli-extensions/nanobanana) by Google LLC.
 
-# Specific variations with auto-preview
-/generate "coffee shop interior" --variations="lighting,mood" --preview
-```
+保留原始版权声明，遵循 Apache 2.0 协议。
 
-**Edit Images:**
+---
 
-```bash
-/edit my_photo.png "add sunglasses to the person"
-/edit portrait.jpg "change background to a beach scene" --preview
-```
+<div align="center">
 
-**Restore Images:**
+如果这个扩展对你有帮助，欢迎 ⭐ Star！
 
-```bash
-/restore old_family_photo.jpg "remove scratches and improve clarity"
-/restore damaged_photo.png "enhance colors and fix tears" --preview
-```
+*If this extension helps you, please consider giving it a ⭐!*
 
-**Generate Icons:**
-
-```bash
-# App icon in multiple sizes
-/icon "coffee cup logo" --sizes="64,128,256" --type="app-icon" --preview
-
-# Favicon set
-/icon "company logo" --type="favicon" --sizes="16,32,64"
-
-# UI elements
-/icon "settings gear icon" --type="ui-element" --style="minimal"
-```
-
-**Create Patterns:**
-
-```bash
-# Seamless pattern
-/pattern "geometric triangles" --type="seamless" --style="geometric" --preview
-
-# Background texture
-/pattern "wood grain texture" --type="texture" --colors="mono"
-
-# Wallpaper pattern
-/pattern "floral design" --type="wallpaper" --density="sparse"
-```
-
-**Generate Stories:**
-
-```bash
-# Visual story sequence
-/story "a seed growing into a tree" --steps=4 --type="process" --preview
-
-# Step-by-step tutorial
-/story "how to make coffee" --steps=6 --type="tutorial"
-
-# Timeline visualization
-/story "evolution of smartphones" --steps=5 --type="timeline"
-```
-
-**Create Diagrams:**
-
-```bash
-# System flowchart
-/diagram "user login process" --type="flowchart" --style="professional" --preview
-
-# Architecture diagram
-/diagram "microservices architecture" --type="architecture" --complexity="detailed"
-
-# Database schema
-/diagram "e-commerce database design" --type="database" --layout="hierarchical"
-```
-
-### 🌟 Natural Language Command (Flexible)
-
-**Open-ended prompts:**
-
-```bash
-/nanobanana create a logo for my tech startup
-/nanobanana I need 5 different versions of a cat illustration in various art styles
-/nanobanana fix the lighting in sunset.jpg and make it more vibrant
-```
-
-## 🎨 Advanced Generation Options
-
-The `/generate` command supports advanced options for creating multiple variations with different styles and parameters.
-
-### Generation Options
-
-**`--count=N`** - Number of variations (1-8, default: 1)
-**`--styles="style1,style2"`** - Comma-separated artistic styles
-**`--variations="var1,var2"`** - Specific variation types  
-**`--format=grid|separate`** - Output format (default: separate)
-**`--seed=123`** - Seed for reproducible variations
-**`--preview`** - Automatically open generated images in default viewer
-
-### Available Styles
-
-- `photorealistic` - Photographic quality images
-- `watercolor` - Watercolor painting style
-- `oil-painting` - Oil painting technique
-- `sketch` - Hand-drawn sketch style
-- `pixel-art` - Retro pixel art style
-- `anime` - Anime/manga art style
-- `vintage` - Vintage/retro aesthetic
-- `modern` - Contemporary/modern style
-- `abstract` - Abstract art style
-- `minimalist` - Clean, minimal design
-
-### Available Variations
-
-- `lighting` - Different lighting conditions (dramatic, soft)
-- `angle` - Various viewing angles (above, close-up)
-- `color-palette` - Different color schemes (warm, cool)
-- `composition` - Different layouts (centered, rule-of-thirds)
-- `mood` - Various emotional tones (cheerful, dramatic)
-- `season` - Different seasons (spring, winter)
-- `time-of-day` - Different times (sunrise, sunset)
-
-### Advanced Examples
-
-**Style Variations:**
-
-```bash
-/generate "mountain landscape" --styles="watercolor,oil-painting,sketch,photorealistic"
-# Creates the same mountain scene in 4 different artistic styles
-```
-
-**Multiple Variations:**
-
-```bash
-/generate "cozy coffee shop" --variations="lighting,mood" --count=4
-# Generates: dramatic lighting, soft lighting, cheerful mood, dramatic mood versions
-```
-
-**Combined Options:**
-
-```bash
-/generate "friendly robot character" --styles="anime,minimalist" --variations="color-palette"
-# Creates anime and minimalist versions with different color palettes
-```
-
-**Simple Multiple Generation:**
-
-```bash
-/generate "tech startup logo" --count=6
-# Generates 6 different interpretations of the same prompt
-```
-
-## 🎯 Icon Generation
-
-The `/icon` command specializes in creating app icons, favicons, and UI elements with proper sizing and formatting.
-
-### Icon Options
-
-**`--sizes="16,32,64"`** - Array of icon sizes in pixels (common: 16, 32, 64, 128, 256, 512, 1024)
-**`--type="app-icon|favicon|ui-element"`** - Icon type (default: app-icon)
-**`--style="flat|skeuomorphic|minimal|modern"`** - Visual style (default: modern)
-**`--format="png|jpeg"`** - Output format (default: png)
-**`--background="transparent|white|black|color"`** - Background type (default: transparent)
-**`--corners="rounded|sharp"`** - Corner style for app icons (default: rounded)
-
-### Icon Examples
-
-```bash
-# Complete app icon set
-/icon "productivity app with checklist" --sizes="64,128,256,512" --corners="rounded"
-
-# Website favicon package
-/icon "mountain logo" --type="favicon" --sizes="16,32,64" --format="png"
-
-# UI element set
-/icon "notification bell" --type="ui-element" --style="flat" --background="transparent"
-```
-
-## 🎨 Pattern & Texture Generation
-
-The `/pattern` command creates seamless patterns and textures perfect for backgrounds and design elements.
-
-### Pattern Options
-
-**`--size="256x256"`** - Pattern tile size (common: 128x128, 256x256, 512x512)
-**`--type="seamless|texture|wallpaper"`** - Pattern type (default: seamless)
-**`--style="geometric|organic|abstract|floral|tech"`** - Pattern style (default: abstract)
-**`--density="sparse|medium|dense"`** - Element density (default: medium)
-**`--colors="mono|duotone|colorful"`** - Color scheme (default: colorful)
-**`--repeat="tile|mirror"`** - Tiling method for seamless patterns (default: tile)
-
-### Pattern Examples
-
-```bash
-# Website background pattern
-/pattern "subtle geometric hexagons" --type="seamless" --colors="duotone" --density="sparse"
-
-# Material texture
-/pattern "brushed metal surface" --type="texture" --style="tech" --colors="mono"
-
-# Decorative wallpaper
-/pattern "art deco design" --type="wallpaper" --style="geometric" --size="512x512"
-```
-
-## 📖 Visual Storytelling
-
-The `/story` command generates sequential images that tell a visual story or demonstrate a step-by-step process.
-
-### Story Options
-
-**`--steps=N`** - Number of sequential images (2-8, default: 4)
-**`--type="story|process|tutorial|timeline"`** - Sequence type (default: story)
-**`--style="consistent|evolving"`** - Visual consistency across frames (default: consistent)
-**`--layout="separate|grid|comic"`** - Output layout (default: separate)
-**`--transition="smooth|dramatic|fade"`** - Transition style between steps (default: smooth)
-**`--format="storyboard|individual"`** - Output format (default: individual)
-
-### Story Examples
-
-```bash
-# Product development process
-/story "idea to launched product" --steps=5 --type="process" --style="consistent"
-
-# Educational tutorial
-/story "git workflow tutorial" --steps=6 --type="tutorial" --layout="comic"
-
-# Brand evolution timeline
-/story "company logo evolution" --steps=4 --type="timeline" --transition="smooth"
-```
-
-## 📊 Technical Diagrams
-
-The `/diagram` command generates professional technical diagrams, flowcharts, and architectural mockups from simple text descriptions.
-
-### Diagram Options
-
-**`--type="flowchart|architecture|network|database|wireframe|mindmap|sequence"`** - Diagram type (default: flowchart)
-**`--style="professional|clean|hand-drawn|technical"`** - Visual style (default: professional)
-**`--layout="horizontal|vertical|hierarchical|circular"`** - Layout orientation (default: hierarchical)
-**`--complexity="simple|detailed|comprehensive"`** - Level of detail (default: detailed)
-**`--colors="mono|accent|categorical"`** - Color scheme (default: accent)
-**`--annotations="minimal|detailed"`** - Label and annotation level (default: detailed)
-
-### Diagram Types & Use Cases
-
-- **flowchart**: Process flows, decision trees, workflows
-- **architecture**: System architecture, microservices, infrastructure
-- **network**: Network topology, server configurations
-- **database**: Database schemas, entity relationships
-- **wireframe**: UI/UX mockups, page layouts
-- **mindmap**: Concept maps, idea hierarchies
-- **sequence**: Sequence diagrams, API interactions
-
-### Diagram Examples
-
-```bash
-# Development workflow
-/diagram "CI/CD pipeline with testing stages" --type="flowchart" --complexity="detailed"
-
-# System design
-/diagram "chat application architecture" --type="architecture" --style="technical"
-
-# API documentation
-/diagram "REST API authentication flow" --type="sequence" --layout="vertical"
-
-# Database design
-/diagram "social media database schema" --type="database" --annotations="detailed"
-```
-
-## 📁 File Management
-
-### Smart Filename Generation
-
-Images are saved with user-friendly names based on your prompts:
-
-- `"sunset over mountains"` → `sunset_over_mountains.png`
-- `"abstract art piece"` → `abstract_art_piece.png`
-
-### Automatic Duplicate Prevention
-
-If a file already exists, a counter is automatically added:
-
-- `sunset_over_mountains.png`
-- `sunset_over_mountains_1.png`
-- `sunset_over_mountains_2.png`
-
-### File Search Locations
-
-For editing/restoration, the extension searches for input images in:
-
-1. Current working directory
-2. `./images/` subdirectory
-3. `./input/` subdirectory
-4. `./nanobanana-output/` subdirectory
-5. `~/Downloads/`
-6. `~/Desktop/`
-
-### Output Directory
-
-Generated images are saved to `./nanobanana-output/` which is created automatically.
-
-## 🛠️ Development
-
-### Build Commands
-
-```bash
-# Build the MCP server
-npm run build
-
-# Install MCP server dependencies
-npm run install-deps
-
-# Development mode with file watching
-npm run dev
-```
-
-### MCP Server Commands
-
-```bash
-# Build MCP server directly
-cd mcp-server && npm run build
-
-# Start server standalone (for testing)
-cd mcp-server && npm start
-
-# Development mode with TypeScript watching
-cd mcp-server && npm run dev
-```
-
-## 🔧 Technical Details
-
-### MCP Server Protocol
-
-The extension uses the official Model Context Protocol (MCP) SDK for robust client-server communication:
-
-- **Protocol**: JSON-RPC over stdio
-- **SDK**: `@modelcontextprotocol/sdk`
-- **Tools**: `generate_image`, `edit_image`, `restore_image`
-
-### API Integration
-
-- **Model**: `gemini-3.1-flash-image-preview`
-- **SDK**: `@google/genai`
-- **Response Handling**: Multiple fallback locations for image data detection
-
-### Error Handling
-
-- Comprehensive error messages with debugging information
-- Graceful fallbacks for API response parsing
-- File validation and search path reporting
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **"Command not recognized"**: Ensure extension is in `~/.gemini/extensions/nanobanana-extension/` and Gemini CLI is restarted
-
-2. **"No API key found"**: Set `GEMINI_API_KEY` environment variable:
-
-   ```bash
-   export GEMINI_API_KEY="your-api-key-here"
-   ```
-
-3. **"Build failed"**: Ensure Node.js 18+ is installed and run:
-
-   ```bash
-   npm run install-deps && npm run build
-   ```
-
-4. **"Image not found"**: Check that input files are in one of the searched directories (see File Search Locations above)
-
-### Debug Mode
-
-The MCP server includes detailed debug logging that appears in the Gemini CLI console to help diagnose issues.
-
-## 📄 Legal
-
-- **License**: [Apache License 2.0](LICENSE)
-- **Security**: [Security Policy](SECURITY.md)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes in the modular architecture
-4. Run `npm run build` to ensure compilation
-5. Test with the Gemini CLI
-6. Submit a pull request
+</div>

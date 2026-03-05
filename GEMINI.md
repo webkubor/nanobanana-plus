@@ -1,4 +1,4 @@
-# Image Switcher — 定制图像生成扩展
+# nanobanana-plus — 首个支持 Nano Banana 2/Pro 按次切换的扩展
 
 > Fork 自 [nanobanana](https://github.com/gemini-cli-extensions/nanobanana)，Apache 2.0 授权。
 > 新增功能：per-call 模型切换 + 宽高比控制。
