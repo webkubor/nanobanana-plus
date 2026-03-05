@@ -121,51 +121,84 @@ export NANOBANANA_MODEL=gemini-3-pro-image-preview
 
 ---
 
-## 💡 Example Prompts
+## 💡 Example Prompts & Gallery
 
-```text
-🎨 High-quality portrait wallpaper (Pro + 9:16)
-> Generate a cyberpunk girl in neon rainy night, use pro model, 9:16
+The latest version supports direct side-by-side switching of both models and aspect ratios!
 
-✅ Successfully generated 1 image(s)
-🍌 Model: Nano Banana Pro 🎨 (gemini-3-pro-image-preview)
-📐 Aspect ratio: 9:16
-📁 Saved to: ~/Desktop/image.png
+### 💎 Imagen 4 Ultra (Top Quality)
+
+*Model: `imagen-4.0-ultra-generate-001`*
+
+**16:9 Desktop Wallpaper**
+
+```bash
+generate_image(prompt="majestic snowy mountain peak under a starry night sky, photorealistic, 8K", model="imagen-4.0-ultra-generate-001", aspectRatio="16:9")
 ```
 
-```text
-⚡ Generate 4 concept drafts quickly (Flash default)
-> Use nanobanana-plus to generate 4 sci-fi spaceship concept images
+![Ultra 16:9](https://files.catbox.moe/a7sfh2.png)
 
-✅ Successfully generated 4 image(s)
-🍌 Model: Nano Banana 2 ⚡ (gemini-3.1-flash-image-preview)
+**1:1 Highly Detailed Portrait**
+
+```bash
+generate_image(prompt="a hyperrealistic close-up portrait of a snow leopard, golden hour light", model="imagen-4.0-ultra-generate-001", aspectRatio="1:1")
 ```
 
-```text
-🖥️ Widescreen wallpaper (16:9)
-> Generate a realistic 16:9 snowy mountain under starry sky
+![Ultra 1:1](https://files.catbox.moe/xu0lyk.png)
 
-✅ Successfully generated 1 image(s)
-🍌 Model: Nano Banana 2 ⚡ (gemini-3.1-flash-image-preview)
-📐 Aspect ratio: 16:9
+### 🚀 Imagen 4 Fast (Speed & Quality)
+
+*Model: `imagen-4.0-fast-generate-001`*
+
+**9:16 Mobile Wallpaper**
+
+```bash
+generate_image(prompt="a tranquil Japanese zen garden at dusk, soft mist, lanterns", model="imagen-4.0-fast-generate-001", aspectRatio="9:16")
 ```
+
+![Fast 9:16](https://files.catbox.moe/8tz6ny.png)
+
+**1:1 Concept Art**
+
+```bash
+generate_image(prompt="cute golden retriever puppy on green grass, soft light", model="imagen-4.0-fast-generate-001", aspectRatio="1:1")
+```
+
+![Fast 1:1](https://files.catbox.moe/s0nyz0.png)
+
+### ⚡ Nano Banana 2 (Fast Defaults)
+
+*Model: `gemini-3.1-flash-image-preview`*
+
+**16:9 Cinematic Shot**
+
+```bash
+generate_image(prompt="cyberpunk city at night, neon lights, rain reflections, cinematic", model="gemini-3.1-flash-image-preview", aspectRatio="16:9")
+```
+
+![Nano Banana 16:9](https://files.catbox.moe/kl23ih.png)
+
+**1:1 Quick Sketch / Fantasy Art**
+
+```bash
+generate_image(prompt="a magical glowing forest with fireflies, fantasy art style", outputCount=2)
+```
+
+![Nano Banana 1:1](https://files.catbox.moe/vomilh.png)
+
+---
+
+### 🛠️ More Utilities
 
 ```text
 🖼️ Multi-style batch comparison
 > Generate sunset mountain scene in watercolor, oil painting, photorealistic and anime styles
-```
 
-```text
 ✏️ Edit existing image
 > Edit ~/Desktop/photo.png and change background to a starry sky
-```
 
-```text
 🎯 App icon generation
 > Generate a clean calendar app icon in sizes 64, 128, 256, 512
-```
 
-```text
 📖 Story sequence
 > Generate a 3-act storyboard for "The Hero's Journey" in cyberpunk style
 ```
@@ -211,6 +244,7 @@ export GOOGLE_API_KEY=<your_key>
 Contributions are welcome.
 
 Focus areas:
+
 - More verified aspect ratios across model versions
 - Built-in style presets
 - Side-by-side flash vs pro comparison mode
@@ -223,11 +257,12 @@ npm install && npm run dev
 ```
 
 Core files:
+
 - `src/index.ts` — MCP tool definitions
 - `src/imageGenerator.ts` — model and generation logic
 - `src/types.ts` — TypeScript types
 
-> Found a bug or want a feature? Open an issue: https://github.com/webkubor/nanobanana-plus/issues
+> Found a bug or want a feature? Open an issue: <https://github.com/webkubor/nanobanana-plus/issues>
 
 ---
 

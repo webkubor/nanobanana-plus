@@ -103,6 +103,11 @@ gemini
 | *(不填)* `gemini-3.1-flash-image-preview` | Nano Banana 2 | ⚡ 日常使用，快速省配额 |
 | `gemini-3-pro-image-preview` | Nano Banana Pro | 🎨 高质量输出，细节精细 |
 | `gemini-2.5-flash-image` | Nano Banana v1 | 🔄 旧版兼容 |
+| `imagen-4.0-ultra-generate-001` | **Imagen 4 Ultra** 💎 | 顶级写实度，需 Pro Key |
+| `imagen-4.0-fast-generate-001` | **Imagen 4 Fast** 🚀 | 兼顾速度质量，需 Pro Key |
+
+> [!NOTE]
+> Imagen 4 模型使用的是 `predict` REST API 协议，必须配置拥有 Pro 权限的 `NANOBANANA_GEMINI_API_KEY`，不支持通过 OAuth/ADC 登录态自动获取。
 
 ```bash
 # 全局默认切换到 Pro（可选）
@@ -123,38 +128,75 @@ export NANOBANANA_MODEL=gemini-3-pro-image-preview
 
 ---
 
-## 💡 示例对话 / Examples
+## 💡 示例图库与指令 / Gallery & Prompts
 
-在 Gemini CLI 中直接用自然语言，生成后会显示所用模型信息：
+最新版本支持更直观的比例与模型完全自由组合。以下是实测样例与生成指令：
 
-```
-🎨 高质量竖版壁纸（Pro + 9:16）
-> 生成一张赛博朋克少女，霓虹灯雨夜，用 pro 模型，9:16 竖版
+### 💎 Imagen 4 Ultra（顶级写实体验）
 
-✅ Successfully generated 1 image(s)
-🍌 Model: Nano Banana Pro 🎨 (gemini-3-pro-image-preview)
-📐 Aspect ratio: 9:16
-📁 Saved to: ~/Desktop/image.png
-```
+*指定模型：`imagen-4.0-ultra-generate-001`*
 
-```
-⚡ 快速出 4 张草图（Flash 默认，省配额）
-> 用 nanobanana-plus 生成 4 张科幻飞船概念图
+**16:9 横版桌面壁纸**
 
-✅ Successfully generated 4 image(s)
-🍌 Model: Nano Banana 2 ⚡ (gemini-3.1-flash-image-preview)
+```bash
+generate_image(prompt="majestic snowy mountain peak under a starry night sky, photorealistic, 8K", model="imagen-4.0-ultra-generate-001", aspectRatio="16:9")
 ```
 
-```
-🖥️ 横版桌面壁纸（16:9）
-> 生成一张 16:9 的星空下雪山，写实风格
+![Ultra 16:9 示例](https://files.catbox.moe/a7sfh2.png)
 
-✅ Successfully generated 1 image(s)
-🍌 Model: Nano Banana 2 ⚡ (gemini-3.1-flash-image-preview)
-📐 Aspect ratio: 16:9
+**1:1 超精细特写头像**
+
+```bash
+generate_image(prompt="a hyperrealistic close-up portrait of a snow leopard, golden hour light", model="imagen-4.0-ultra-generate-001", aspectRatio="1:1")
 ```
 
+![Ultra 1:1 示例](https://files.catbox.moe/xu0lyk.png)
+
+### 🚀 Imagen 4 Fast（极速与质量兼顾）
+
+*指定模型：`imagen-4.0-fast-generate-001`*
+
+**9:16 竖版手机壁纸 / 小红书图**
+
+```bash
+generate_image(prompt="a tranquil Japanese zen garden at dusk, soft mist, lanterns", model="imagen-4.0-fast-generate-001", aspectRatio="9:16")
 ```
+
+![Fast 9:16 示例](https://files.catbox.moe/8tz6ny.png)
+
+**1:1 概念设计草图**
+
+```bash
+generate_image(prompt="cute golden retriever puppy on green grass, soft light", model="imagen-4.0-fast-generate-001", aspectRatio="1:1")
+```
+
+![Fast 1:1 示例](https://files.catbox.moe/s0nyz0.png)
+
+### ⚡ Nano Banana 2（极速日常使用）
+
+*默认模型：`gemini-3.1-flash-image-preview`*
+
+**16:9 电影感构图**
+
+```bash
+generate_image(prompt="cyberpunk city at night, neon lights, rain reflections, cinematic", model="gemini-3.1-flash-image-preview", aspectRatio="16:9")
+```
+
+![Nano Banana 16:9 示例](https://files.catbox.moe/kl23ih.png)
+
+**1:1 奇幻艺术设定（一次出 2 张）**
+
+```bash
+generate_image(prompt="a magical glowing forest with fireflies, fantasy art style", outputCount=2)
+```
+
+![Nano Banana 1:1 示例](https://files.catbox.moe/vomilh.png)
+
+---
+
+### 🛠️ 更多进阶玩法
+
+```text
 🖼️ 多风格批量对比（一次出 4 种）
 > 生成日落山景，同时出水彩、油画、写实照片、动漫四种风格
 ```
@@ -224,6 +266,7 @@ npm install && npm run dev
 ```
 
 核心文件：
+
 - `src/index.ts` — MCP Tool 定义（新增参数在这里）
 - `src/imageGenerator.ts` — API 调用逻辑（模型/宽高比处理）
 - `src/types.ts` — TypeScript 类型定义

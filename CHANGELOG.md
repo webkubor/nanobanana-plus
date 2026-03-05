@@ -6,13 +6,22 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 ---
 
-## [1.1.0] — 2026-03-05 🍌+ First Plus Release — Per-call Model Switching + Aspect Ratio
+## [1.1.0] — 2026-03-05 🍌+ First Plus Release — Per-call Model Switching, Aspect Ratio & Imagen 4
 
 This is the first release of **nanobanana-plus**, forked from the original [nanobanana](https://github.com/gemini-cli-extensions/nanobanana) (Apache 2.0) with key enhancements the community has been asking for.
 
 ### ✨ Added
 
-#### 🔀 Per-call Model Switching (addresses [nanobanana#44](https://github.com/gemini-cli-extensions/nanobanana/issues/44))
+#### �️ Imagen 4 Ultra & Fast Support (via predict REST API)
+
+Full support for the next-generation Imagen 4 models, utilizing direct `predict` REST API payload structures.
+
+- `imagen-4.0-ultra-generate-001`: Top photorealism and stunning details.
+- `imagen-4.0-fast-generate-001`: Incredible speed and quality combined.
+*(Note: Requires a Gemini API Key with Pro access; OAuth/ADC is not supported for predict models).*
+
+#### �🔀 Per-call Model Switching (addresses [nanobanana#44](https://github.com/gemini-cli-extensions/nanobanana/issues/44))
+
 The most-requested feature in the nanobanana community. Previously, switching models required restarting the MCP server via environment variable. Now you can specify the model **per call**:
 
 ```
@@ -24,13 +33,17 @@ generate_image --prompt "..."
 ```
 
 Supported models:
+
 | `model` value | Name | Best for |
 |---|---|---|
 | `gemini-3.1-flash-image-preview` | Nano Banana 2 | ⚡ Default · Fast · Saves quota |
 | `gemini-3-pro-image-preview` | Nano Banana Pro | 🎨 High quality · Fine details |
 | `gemini-2.5-flash-image` | Nano Banana v1 | 🔄 Legacy compatibility |
+| `imagen-4.0-ultra-generate-001` | Imagen 4 Ultra | 💎 Top photorealism, Pro Key required |
+| `imagen-4.0-fast-generate-001` | Imagen 4 Fast | 🚀 Speed + quality, Pro Key required |
 
 #### 📐 Aspect Ratio Control
+
 The original nanobanana only generates **1:1 square images**. nanobanana-plus lets you specify the native aspect ratio per call:
 
 ```
@@ -42,15 +55,18 @@ generate_image --prompt "..." --aspectRatio "1:1"    # square (original behavior
 Supported ratios: `16:9` · `9:16` · `1:1` · `4:3` · `3:4`
 
 #### 🔐 OAuth / ADC Fallback
+
 No API key? No problem. If you're already logged into Gemini CLI (`gemini auth login`), nanobanana-plus will automatically reuse your login credentials. No `NANOBANANA_GEMINI_API_KEY` required.
 
 **Priority order:**
+
 1. `NANOBANANA_GEMINI_API_KEY` env var
 2. `GEMINI_API_KEY` env var
 3. `GOOGLE_API_KEY` env var
 4. **OAuth / Application Default Credentials (ADC)** ← new fallback
 
 #### 🧭 Model Info in Response
+
 Every successful generation now returns which model was used:
 
 ```
@@ -61,11 +77,14 @@ Every successful generation now returns which model was used:
 ```
 
 #### 🛠️ setup.sh — One-click Onboarding
+
 New setup script for first-time users:
+
 ```bash
 git clone https://github.com/webkubor/nanobanana-plus
 bash nanobanana-plus/setup.sh
 ```
+
 Guides you to [Google AI Studio](https://aistudio.google.com/apikey), pastes the key, writes to `~/.zshrc`. Done.
 
 ### 🔧 Changed
@@ -120,6 +139,7 @@ npm run build     # compile TypeScript
 ```
 
 Key files:
+
 - `mcp-server/src/index.ts` — MCP tool definitions (add new params here)
 - `mcp-server/src/imageGenerator.ts` — API call logic (model / aspectRatio handling)
 - `mcp-server/src/types.ts` — TypeScript interfaces

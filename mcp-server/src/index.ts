@@ -136,9 +136,11 @@ class NanoBananaServer {
                     'gemini-3.1-flash-image-preview',
                     'gemini-3-pro-image-preview',
                     'gemini-2.5-flash-image',
+                    'imagen-4.0-ultra-generate-001',
+                    'imagen-4.0-fast-generate-001',
                   ],
                   description:
-                    '模型选择（可选）: flash=快速省配额(默认) / pro=高质量 / v1=旧版兼容。不填则使用服务器默认模型。',
+                    '模型选择（可选）: flash=快速省配额(默认) / pro=高质量 / v1=旧版兼容 / ultra=Imagen 4 顶级写实(Pro Key) / fast=Imagen 4 极速(Pro Key)。不填则使用服务器默认模型。',
                 },
                 aspectRatio: {
                   type: 'string',
@@ -622,7 +624,7 @@ class NanoBananaServer {
             content: [
               {
                 type: 'text',
-                text: `${responseText}\n\nGenerated files:\n${response.generatedFiles?.map((f) => `• ${f}`).join('\n') || 'None'}`, 
+                text: `${responseText}\n\nGenerated files:\n${response.generatedFiles?.map((f) => `• ${f}`).join('\n') || 'None'}`,
               },
             ],
           };
@@ -644,7 +646,7 @@ class NanoBananaServer {
     if (!status.ready) {
       throw new Error(
         `${status.message}\n` +
-          '请先让用户输入 API Key 并调用 configure_api_key，或启用 OAuth/ADC 登录态后再继续生成。',
+        '请先让用户输入 API Key 并调用 configure_api_key，或启用 OAuth/ADC 登录态后再继续生成。',
       );
     }
   }

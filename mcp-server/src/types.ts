@@ -7,7 +7,9 @@
 export type NanoBananaModel =
   | 'gemini-3.1-flash-image-preview'   // Nano Banana 2 — 快速，默认
   | 'gemini-3-pro-image-preview'        // Nano Banana Pro — 高质量
-  | 'gemini-2.5-flash-image';           // Nano Banana v1 — 兼容旧版
+  | 'gemini-2.5-flash-image'            // Nano Banana v1 — 兼容旧版
+  | 'imagen-4.0-ultra-generate-001'    // Imagen 4 Ultra — predict 协议，Pro 专享
+  | 'imagen-4.0-fast-generate-001';    // Imagen 4 Fast — predict 协议，Pro 专享
 
 export interface ImageGenerationRequest {
   prompt: string;
