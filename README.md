@@ -24,15 +24,17 @@
 
 > 原版 nanobanana **只能生成 1:1 正方形图**，nanobanana-plus 支持任意宽高比。
 
-下图由 `nanobanana-plus` 生成，**非 1:1，为自然横版宽屏比例**：
+### 操作界面 / CLI in Action
+
+![CLI 操作截图](https://raw.githubusercontent.com/webkubor/nanobanana-plus/main/docs/demo-cli-output.png)
+
+> 一句中文指令 → `generate_image (nanobanana-plus MCP Server)` → 成功生成并保存
+
+### 生成结果 / Generated Image
+
+下图由 `nanobanana-plus` 生成，**非 1:1，为模型原生横版宽屏比例**：
 
 ![橙色猫咪坐在雨天窗台上](https://raw.githubusercontent.com/webkubor/nanobanana-plus/main/docs/demo-cat-rainy-window.png)
-
-```
-> 用 nanobanana-plus 生成一只橙色猫咪坐在窗台上，外面是雨天
-✔ generate_image (nanobanana-plus MCP Server)
-Successfully generated 1 image variation(s)
-```
 
 **对比原版**：同样的 prompt，原版 nanobanana 只会输出 1:1 正方形裁切，nanobanana-plus 保留了模型原生的横版构图，细节更完整，氛围感更强。
 
