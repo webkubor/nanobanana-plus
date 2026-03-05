@@ -39,6 +39,20 @@ export interface ImageGenerationResponse {
 export interface AuthConfig {
   apiKey: string;
   keyType: 'GEMINI_API_KEY' | 'GOOGLE_API_KEY';
+  source:
+    | 'NANOBANANA_GEMINI_API_KEY'
+    | 'NANOBANANA_GOOGLE_API_KEY'
+    | 'GEMINI_API_KEY'
+    | 'GOOGLE_API_KEY'
+    | 'runtime'
+    | 'none';
+}
+
+export interface AuthStatus {
+  hasApiKey: boolean;
+  keyType?: 'GEMINI_API_KEY' | 'GOOGLE_API_KEY';
+  source: AuthConfig['source'];
+  message: string;
 }
 
 export interface FileSearchResult {

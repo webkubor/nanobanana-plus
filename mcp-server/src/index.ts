@@ -18,6 +18,7 @@ import {
   IconPromptArgs,
   PatternPromptArgs,
   DiagramPromptArgs,
+  AuthConfig,
 } from './types.js';
 
 class NanoBananaServer {
@@ -54,6 +55,38 @@ class NanoBananaServer {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
         tools: [
+          {
+            name: 'check_auth_status',
+            description:
+              'Check whether an API key is configured and ready for image generation',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          },
+          {
+            name: 'configure_api_key',
+            description:
+              'Configure and validate Gemini API key for current session before image generation',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                apiKey: {
+                  type: 'string',
+                  description:
+                    'Gemini API key from https://aistudio.google.com/apikey',
+                },
+                keyType: {
+                  type: 'string',
+                  enum: ['GEMINI_API_KEY', 'GOOGLE_API_KEY'],
+                  description:
+                    'Key type hint, default GEMINI_API_KEY',
+                  default: 'GEMINI_API_KEY',
+                },
+              },
+              required: ['apiKey'],
+            },
+          },
           {
             name: 'generate_image',
             description:
@@ -426,7 +459,36 @@ class NanoBananaServer {
         let response;
 
         switch (name) {
+          case 'check_auth_status': {
+            const status = this.imageGenerator.getAuthStatus();
+            response = {
+              success: true,
+              message:
+                `${status.message}\n` +
+                `source: ${status.source}\n` +
+                `hasApiKey: ${status.hasApiKey}`,
+            };
+            break;
+          }
+
+          case 'configure_api_key': {
+            const apiKey = (args?.apiKey as string) || '';
+            const keyType =
+              ((args?.keyType as AuthConfig['keyType']) || 'GEMINI_API_KEY');
+            const configResult = await this.imageGenerator.configureRuntimeApiKey(
+              apiKey,
+              keyType,
+            );
+            response = {
+              success: configResult.success,
+              message: configResult.message,
+              ...(configResult.success ? {} : { error: configResult.message }),
+            };
+            break;
+          }
+
           case 'generate_image': {
+            this.ensureApiKeyConfigured();
             const imageRequest: ImageGenerationRequest = {
               prompt: args?.prompt as string,
               outputCount: (args?.outputCount as number) || 1,
@@ -448,6 +510,7 @@ class NanoBananaServer {
           }
 
           case 'edit_image': {
+            this.ensureApiKeyConfigured();
             const editRequest: ImageGenerationRequest = {
               prompt: args?.prompt as string,
               inputImage: args?.file as string,
@@ -462,6 +525,7 @@ class NanoBananaServer {
           }
 
           case 'restore_image': {
+            this.ensureApiKeyConfigured();
             const restoreRequest: ImageGenerationRequest = {
               prompt: args?.prompt as string,
               inputImage: args?.file as string,
@@ -476,6 +540,7 @@ class NanoBananaServer {
           }
 
           case 'generate_icon': {
+            this.ensureApiKeyConfigured();
             const iconRequest: ImageGenerationRequest = {
               prompt: this.buildIconPrompt(args),
               outputCount: (args?.sizes as number[])?.length || 1,
@@ -492,6 +557,7 @@ class NanoBananaServer {
           }
 
           case 'generate_pattern': {
+            this.ensureApiKeyConfigured();
             const patternRequest: ImageGenerationRequest = {
               prompt: this.buildPatternPrompt(args),
               outputCount: 1,
@@ -507,6 +573,7 @@ class NanoBananaServer {
           }
 
           case 'generate_story': {
+            this.ensureApiKeyConfigured();
             const storyRequest: ImageGenerationRequest = {
               prompt: args?.prompt as string,
               outputCount: (args?.steps as number) || 4,
@@ -525,6 +592,7 @@ class NanoBananaServer {
           }
 
           case 'generate_diagram': {
+            this.ensureApiKeyConfigured();
             const diagramRequest: ImageGenerationRequest = {
               prompt: this.buildDiagramPrompt(args),
               outputCount: 1,
@@ -563,6 +631,16 @@ class NanoBananaServer {
         throw new Error(`An unexpected error occurred: ${String(error)}`);
       }
     });
+  }
+
+  private ensureApiKeyConfigured() {
+    const status = this.imageGenerator.getAuthStatus();
+    if (!status.hasApiKey) {
+      throw new Error(
+        `${status.message}\n` +
+          '请先让用户输入 API Key，然后调用 configure_api_key 完成验证，再继续生成。',
+      );
+    }
   }
 
   private buildIconPrompt(args?: IconPromptArgs): string {

@@ -10,6 +10,7 @@ import {
   ImageGenerationRequest,
   ImageGenerationResponse,
   AuthConfig,
+  AuthStatus,
   StorySequenceArgs,
 } from './types.js';
 import { exec } from 'child_process';
@@ -20,10 +21,15 @@ const execAsync = promisify(exec);
 export class ImageGenerator {
   private ai: GoogleGenAI;
   private modelName: string;
+  private authConfig: AuthConfig;
+  private authValidated = false;
+  private authValidationError: string | null = null;
   private static readonly DEFAULT_MODEL = 'gemini-3.1-flash-image-preview';
+  private static readonly MODEL_LIST_ENDPOINT =
+    'https://generativelanguage.googleapis.com/v1beta/models';
 
   constructor(authConfig: AuthConfig) {
-    // apiKey 为空时不传，让 SDK 自动走 OAuth / ADC
+    this.authConfig = authConfig;
     this.ai = new GoogleGenAI(
       authConfig.apiKey ? { apiKey: authConfig.apiKey } : {},
     );
@@ -110,13 +116,34 @@ export class ImageGenerator {
     const nanoGeminiKey = process.env.NANOBANANA_GEMINI_API_KEY;
     if (nanoGeminiKey) {
       console.error('✓ Found NANOBANANA_GEMINI_API_KEY environment variable');
-      return { apiKey: nanoGeminiKey, keyType: 'GEMINI_API_KEY' };
+      return {
+        apiKey: nanoGeminiKey,
+        keyType: 'GEMINI_API_KEY',
+        source: 'NANOBANANA_GEMINI_API_KEY',
+      };
     }
 
     const nanoGoogleKey = process.env.NANOBANANA_GOOGLE_API_KEY;
     if (nanoGoogleKey) {
       console.error('✓ Found NANOBANANA_GOOGLE_API_KEY environment variable');
-      return { apiKey: nanoGoogleKey, keyType: 'GOOGLE_API_KEY' };
+      return {
+        apiKey: nanoGoogleKey,
+        keyType: 'GOOGLE_API_KEY',
+        source: 'NANOBANANA_GOOGLE_API_KEY',
+      };
+    }
+
+    const allowFallback =
+      process.env.NANOBANANA_ALLOW_FALLBACK_KEYS === '1' ||
+      process.env.NANOBANANA_ALLOW_FALLBACK_KEYS === 'true';
+
+    if (!allowFallback) {
+      if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
+        console.error(
+          '⚠️ GEMINI_API_KEY/GOOGLE_API_KEY detected but ignored. Set NANOBANANA_ALLOW_FALLBACK_KEYS=true to allow fallback keys.',
+        );
+      }
+      return { apiKey: '', keyType: 'GEMINI_API_KEY', source: 'none' };
     }
 
     const geminiKey = process.env.GEMINI_API_KEY;
@@ -124,7 +151,11 @@ export class ImageGenerator {
       console.error(
         '✓ Found GEMINI_API_KEY environment variable (fallback)',
       );
-      return { apiKey: geminiKey, keyType: 'GEMINI_API_KEY' };
+      return {
+        apiKey: geminiKey,
+        keyType: 'GEMINI_API_KEY',
+        source: 'GEMINI_API_KEY',
+      };
     }
 
     const googleKey = process.env.GOOGLE_API_KEY;
@@ -132,14 +163,141 @@ export class ImageGenerator {
       console.error(
         '✓ Found GOOGLE_API_KEY environment variable (fallback)',
       );
-      return { apiKey: googleKey, keyType: 'GOOGLE_API_KEY' };
+      return {
+        apiKey: googleKey,
+        keyType: 'GOOGLE_API_KEY',
+        source: 'GOOGLE_API_KEY',
+      };
     }
 
-    // 没有 API Key 时，降级走 OAuth / ADC（和 Gemini CLI 登录态共享）
-    // @google/genai SDK 在无 apiKey 时会自动寻找 Application Default Credentials
-    console.error('✓ No API key found, falling back to OAuth / ADC (Gemini CLI login)');
-    return { apiKey: '', keyType: 'GEMINI_API_KEY' };
+    return { apiKey: '', keyType: 'GEMINI_API_KEY', source: 'none' };
+  }
 
+  getAuthStatus(): AuthStatus {
+    if (this.hasApiKey()) {
+      const sourceLabel =
+        this.authConfig.source === 'runtime'
+          ? 'runtime input'
+          : this.authConfig.source;
+      return {
+        hasApiKey: true,
+        keyType: this.authConfig.keyType,
+        source: this.authConfig.source,
+        message: `✅ API key ready (${sourceLabel}).`,
+      };
+    }
+
+    return {
+      hasApiKey: false,
+      source: 'none',
+      message:
+        '❌ No API key configured. Please provide a Gemini API key before generating images.',
+    };
+  }
+
+  async configureRuntimeApiKey(
+    apiKey: string,
+    keyType: AuthConfig['keyType'] = 'GEMINI_API_KEY',
+  ): Promise<{ success: boolean; message: string }> {
+    const normalized = apiKey.trim();
+    if (!normalized) {
+      return { success: false, message: 'API key is empty.' };
+    }
+
+    const validationResult = await ImageGenerator.validateApiKey(normalized);
+    if (!validationResult.valid) {
+      return {
+        success: false,
+        message: `API key validation failed: ${validationResult.message}`,
+      };
+    }
+
+    this.authConfig = { apiKey: normalized, keyType, source: 'runtime' };
+    this.ai = new GoogleGenAI({ apiKey: normalized });
+    this.authValidated = true;
+    this.authValidationError = null;
+    return {
+      success: true,
+      message:
+        '✅ API key is valid and has been configured for this session. You can continue image generation now.',
+    };
+  }
+
+  private hasApiKey(): boolean {
+    return this.authConfig.apiKey.trim().length > 0;
+  }
+
+  private static async validateApiKey(
+    apiKey: string,
+  ): Promise<{ valid: boolean; message: string }> {
+    try {
+      const response = await fetch(
+        `${ImageGenerator.MODEL_LIST_ENDPOINT}?key=${encodeURIComponent(apiKey)}`,
+      );
+
+      if (response.ok) {
+        return { valid: true, message: 'API key is valid.' };
+      }
+
+      let errorDetails = '';
+      try {
+        const payload = (await response.json()) as {
+          error?: { message?: string };
+        };
+        errorDetails = payload.error?.message || '';
+      } catch {
+        errorDetails = await response.text();
+      }
+
+      const message = errorDetails || response.statusText;
+      if (response.status === 400 || response.status === 401) {
+        return { valid: false, message: `Invalid API key. ${message}` };
+      }
+      if (response.status === 403) {
+        return {
+          valid: false,
+          message: `API key does not have required permissions. ${message}`,
+        };
+      }
+      return {
+        valid: false,
+        message: `Validation request failed with status ${response.status}. ${message}`,
+      };
+    } catch (error: unknown) {
+      return {
+        valid: false,
+        message: `Failed to validate API key due to network/runtime error: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
+  private async ensureAuthenticationReady(): Promise<void> {
+    if (!this.hasApiKey()) {
+      throw new Error(
+        '未检测到可用 API Key。请先提供 Gemini API Key（https://aistudio.google.com/apikey）。\n' +
+          '你可以直接回复：我的 key 是 xxx。收到后我会先验证可用性，再继续生成。',
+      );
+    }
+
+    if (this.authValidated) {
+      return;
+    }
+
+    if (this.authValidationError) {
+      throw new Error(this.authValidationError);
+    }
+
+    const validationResult = await ImageGenerator.validateApiKey(
+      this.authConfig.apiKey,
+    );
+    if (!validationResult.valid) {
+      this.authValidationError =
+        `当前 API Key 验证失败：${validationResult.message}\n` +
+        '请重新输入可用 key，我会验证通过后继续生成。';
+      throw new Error(this.authValidationError);
+    }
+
+    this.authValidated = true;
   }
 
   private isValidBase64ImageData(data: string): boolean {
@@ -250,6 +408,7 @@ export class ImageGenerator {
     request: ImageGenerationRequest,
   ): Promise<ImageGenerationResponse> {
     try {
+      await this.ensureAuthenticationReady();
       const outputPath = FileHandler.ensureOutputDirectory();
       const generatedFiles: string[] = [];
       const prompts = this.buildBatchPrompts(request);
@@ -381,7 +540,7 @@ export class ImageGenerator {
       error instanceof Error ? error.message : String(error).toLowerCase();
 
     if (errorMessage.includes('api key not valid')) {
-      return 'Authentication failed: The provided API key is invalid. Please check your NANOBANANA_GEMINI_API_KEY environment variable.';
+      return 'Authentication failed: The provided API key is invalid. Please provide a valid key and verify it before retrying.';
     }
 
     if (errorMessage.includes('permission denied')) {
@@ -408,7 +567,7 @@ export class ImageGenerator {
         case 400:
           return 'The request was malformed. This may be due to an issue with the prompt. Please check for safety violations or unsupported content.';
         case 403: // General permission error if specific message not caught
-          return 'Authentication failed. Please ensure your API key (e.g., NANOBANANA_GEMINI_API_KEY) is valid and has the necessary permissions.';
+          return 'Authentication failed. Please ensure your API key is valid and has the necessary permissions.';
         case 500:
           return 'The image generation service encountered a temporary internal error. Please try again later.';
         default:
@@ -425,6 +584,7 @@ export class ImageGenerator {
       args?: StorySequenceArgs,
     ): Promise<ImageGenerationResponse> {
       try {
+        await this.ensureAuthenticationReady();
         const outputPath = FileHandler.ensureOutputDirectory();
         const generatedFiles: string[] = [];
         const steps = request.outputCount || 4;
@@ -565,6 +725,7 @@ export class ImageGenerator {
     request: ImageGenerationRequest,
   ): Promise<ImageGenerationResponse> {
     try {
+      await this.ensureAuthenticationReady();
       if (!request.inputImage) {
         return {
           success: false,

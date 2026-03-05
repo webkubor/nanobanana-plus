@@ -15,8 +15,10 @@ User input: {{args}}
 Parse this input and:
 1. Extract the main prompt (text before any options)
 2. Validate all options against allowed values
-3. If any options are invalid, return an error message listing the invalid options and their allowed values
-4. If valid, call the generate_image tool with the parsed parameters
+3. Before generating, call `check_auth_status`:
+   - If API key missing, ask user to input key, then call `configure_api_key`, and only after successful validation continue.
+4. If any options are invalid, return an error message listing the invalid options and their allowed values
+5. If valid and auth-ready, call the generate_image tool with the parsed parameters
 
 If you find invalid options, respond with:
 "Error: Invalid option(s) found: [list invalid options]. Valid options are: --count (1-8), --styles (comma-separated list from: photorealistic, watercolor, oil-painting, sketch, pixel-art, anime, vintage, modern, abstract, minimalist), --variations (comma-separated list from: lighting, angle, color-palette, composition, mood, season, time-of-day), --format (grid or separate), --seed (integer), --preview (flag)"
