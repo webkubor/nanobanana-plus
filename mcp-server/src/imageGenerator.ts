@@ -249,6 +249,22 @@ export class ImageGenerator {
     return this.authConfig.apiKey.trim().length > 0;
   }
 
+  private getAuthModeLabel(): string {
+    switch (this.authConfig.source) {
+      case 'runtime':
+        return 'Runtime API Key (session input)';
+      case 'NANOBANANA_GEMINI_API_KEY':
+      case 'NANOBANANA_GOOGLE_API_KEY':
+      case 'GEMINI_API_KEY':
+      case 'GOOGLE_API_KEY':
+        return `API Key (${this.authConfig.source})`;
+      case 'oauth_adc':
+        return 'OAuth/ADC (Gemini CLI login/session)';
+      default:
+        return 'Unknown';
+    }
+  }
+
   private static async validateApiKey(
     apiKey: string,
   ): Promise<{ valid: boolean; message: string }> {
@@ -544,6 +560,7 @@ export class ImageGenerator {
       return {
         success: true,
         message: `✅ Successfully generated ${generatedFiles.length} image(s)\n` +
+          `🔐 Auth: ${this.getAuthModeLabel()}\n` +
           `🍌 Model: ${modelLabel} (${usedModel})\n` +
           (request.aspectRatio ? `📐 Aspect ratio: ${request.aspectRatio}\n` : '') +
           `📁 Saved to: ${generatedFiles.join(', ')}`,
@@ -735,7 +752,7 @@ export class ImageGenerator {
   
         return {
           success: true,
-          message: successMessage,
+          message: `${successMessage}\n🔐 Auth: ${this.getAuthModeLabel()}`,
           generatedFiles,
         };
       } catch (error: unknown) {
@@ -846,7 +863,7 @@ generatedFiles.push(fullPath);
 
         return {
           success: true,
-          message: `Successfully ${request.mode}d image`,
+          message: `Successfully ${request.mode}d image\n🔐 Auth: ${this.getAuthModeLabel()}`,
           generatedFiles,
         };
       }

@@ -613,11 +613,16 @@ class NanoBananaServer {
         }
 
         if (response.success) {
+          const authStatus = this.imageGenerator.getAuthStatus();
+          const authLine = `🔐 Auth mode: ${authStatus.source}`;
+          const responseText = response.message.includes('🔐 Auth:')
+            ? response.message
+            : `${response.message}\n${authLine}`;
           return {
             content: [
               {
                 type: 'text',
-                text: `${response.message}\n\nGenerated files:\n${response.generatedFiles?.map((f) => `• ${f}`).join('\n') || 'None'}`, 
+                text: `${responseText}\n\nGenerated files:\n${response.generatedFiles?.map((f) => `• ${f}`).join('\n') || 'None'}`, 
               },
             ],
           };
