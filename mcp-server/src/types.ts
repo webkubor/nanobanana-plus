@@ -44,11 +44,13 @@ export interface AuthConfig {
     | 'NANOBANANA_GOOGLE_API_KEY'
     | 'GEMINI_API_KEY'
     | 'GOOGLE_API_KEY'
+    | 'oauth_adc'
     | 'runtime'
     | 'none';
 }
 
 export interface AuthStatus {
+  ready: boolean;
   hasApiKey: boolean;
   keyType?: 'GEMINI_API_KEY' | 'GOOGLE_API_KEY';
   source: AuthConfig['source'];

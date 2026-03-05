@@ -465,6 +465,7 @@ class NanoBananaServer {
               success: true,
               message:
                 `${status.message}\n` +
+                `ready: ${status.ready}\n` +
                 `source: ${status.source}\n` +
                 `hasApiKey: ${status.hasApiKey}`,
             };
@@ -635,10 +636,10 @@ class NanoBananaServer {
 
   private ensureApiKeyConfigured() {
     const status = this.imageGenerator.getAuthStatus();
-    if (!status.hasApiKey) {
+    if (!status.ready) {
       throw new Error(
         `${status.message}\n` +
-          '请先让用户输入 API Key，然后调用 configure_api_key 完成验证，再继续生成。',
+          '请先让用户输入 API Key 并调用 configure_api_key，或启用 OAuth/ADC 登录态后再继续生成。',
       );
     }
   }

@@ -16,9 +16,9 @@ Be intelligent about interpreting the user's intent from their natural language 
 
 Authentication flow (must follow before any generation/edit call):
 1) First call `check_auth_status`.
-2) If auth is missing, ask the user for API key (Gemini API key from https://aistudio.google.com/apikey).
+2) If `ready=false`, ask the user for API key (Gemini API key from https://aistudio.google.com/apikey) or ask user to enable OAuth/ADC login.
 3) After user provides key, call `configure_api_key` with that key.
-4) If validation succeeds, continue with the originally intended tool call.
+4) If validation succeeds (or OAuth/ADC is already ready), continue with the originally intended tool call.
 5) If validation fails, clearly relay the failure reason and ask user to provide another key.
 
 User request: {{args}}

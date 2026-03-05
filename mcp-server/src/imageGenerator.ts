@@ -170,6 +170,16 @@ export class ImageGenerator {
       };
     }
 
+    const allowOAuthAdc =
+      process.env.NANOBANANA_ALLOW_OAUTH_ADC !== '0' &&
+      process.env.NANOBANANA_ALLOW_OAUTH_ADC !== 'false';
+    if (allowOAuthAdc) {
+      console.error(
+        '✓ No API key found, using OAuth/ADC credentials (Gemini CLI login/session)',
+      );
+      return { apiKey: '', keyType: 'GEMINI_API_KEY', source: 'oauth_adc' };
+    }
+
     return { apiKey: '', keyType: 'GEMINI_API_KEY', source: 'none' };
   }
 
@@ -180,6 +190,7 @@ export class ImageGenerator {
           ? 'runtime input'
           : this.authConfig.source;
       return {
+        ready: true,
         hasApiKey: true,
         keyType: this.authConfig.keyType,
         source: this.authConfig.source,
@@ -187,11 +198,22 @@ export class ImageGenerator {
       };
     }
 
+    if (this.authConfig.source === 'oauth_adc') {
+      return {
+        ready: true,
+        hasApiKey: false,
+        source: 'oauth_adc',
+        message:
+          '✅ OAuth/ADC ready (Gemini CLI login/session). You can generate images without explicitly setting API key.',
+      };
+    }
+
     return {
+      ready: false,
       hasApiKey: false,
       source: 'none',
       message:
-        '❌ No API key configured. Please provide a Gemini API key before generating images.',
+        '❌ No authentication configured. Provide API key or enable OAuth/ADC.',
     };
   }
 
@@ -272,10 +294,14 @@ export class ImageGenerator {
   }
 
   private async ensureAuthenticationReady(): Promise<void> {
+    if (this.authConfig.source === 'oauth_adc') {
+      return;
+    }
+
     if (!this.hasApiKey()) {
       throw new Error(
         '未检测到可用 API Key。请先提供 Gemini API Key（https://aistudio.google.com/apikey）。\n' +
-          '你可以直接回复：我的 key 是 xxx。收到后我会先验证可用性，再继续生成。',
+          '或启用 OAuth/ADC（Gemini CLI 登录态）。你也可以直接回复：我的 key 是 xxx，我会先验证可用性再继续生成。',
       );
     }
 
