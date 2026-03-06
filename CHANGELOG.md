@@ -33,6 +33,10 @@ Full support for the next-generation Imagen 4 models, utilizing direct `predict`
 - `imagen-4.0-fast-generate-001`: Incredible speed and quality combined.
 *(Note: Requires a Gemini API Key with Pro access; OAuth/ADC is not supported for predict models).*
 
+#### 🎨 Output Sample (Imagen 4 Ultra)
+
+![Imagen 4 Ultra Sample](https://img.webkubor.online/roof-rain-21-9.png)
+
 ---
 
 ## [1.1.0] — 2026-03-05 🍌+ First Plus Release — Per-call Model Switching + Aspect Ratio

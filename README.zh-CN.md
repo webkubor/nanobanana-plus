@@ -144,7 +144,7 @@ generate_image(prompt="A cinematic ultra-wide background image. A close-up of tr
 
 实测出图：
 
-![屋檐夜雨 21:9 示例](./docs/samples/roof-rain-21-9.png)
+![屋檐夜雨 21:9 示例](https://img.webkubor.online/roof-rain-21-9.png)
 
 ---
 

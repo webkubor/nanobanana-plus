@@ -137,7 +137,7 @@ generate_image(prompt="A cinematic ultra-wide background image. A close-up of tr
 
 Generated sample:
 
-![Roof rain 21:9 sample](./docs/samples/roof-rain-21-9.png)
+![Roof rain 21:9 sample](https://img.webkubor.online/roof-rain-21-9.png)
 
 ---
 
