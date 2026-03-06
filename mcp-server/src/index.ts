@@ -153,6 +153,11 @@ class NanoBananaServer {
                   description:
                     '网页横幅比例预设（可选）: web-hero=21:9 / web-banner=16:9 / section-banner=3:1。',
                 },
+                customFileName: {
+                  type: 'string',
+                  description:
+                    '自定义输出文件名前缀（可选）。如果不填，将从 prompt 自动生成。',
+                },
                 preview: {
                   type: 'boolean',
                   description:
@@ -510,6 +515,7 @@ class NanoBananaServer {
               aspectRatio: args?.aspectRatio as string,
               aspectRatioPreset:
                 args?.aspectRatioPreset as ImageGenerationRequest['aspectRatioPreset'],
+              customFileName: args?.customFileName as string,
               preview: args?.preview as boolean,
               noPreview:
                 (args?.noPreview as boolean) ||

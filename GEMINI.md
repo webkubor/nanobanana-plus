@@ -16,6 +16,8 @@
 | `gemini-3.1-flash-image-preview` | Nano Banana 2 | **默认**，快速，省配额 |
 | `gemini-3-pro-image-preview` | Nano Banana Pro | 高质量，细节更丰富 |
 | `gemini-2.5-flash-image` | Nano Banana v1 | 旧版兼容 |
+| `imagen-4.0-ultra-generate-001` | Imagen 4 Ultra | 顶级写实度，需 API Key |
+| `imagen-4.0-fast-generate-001` | Imagen 4 Fast | 兼顾速度质量，需 API Key |
 
 不指定 model 时，使用环境变量 `NANOBANANA_MODEL` 或默认 flash 模型。
 

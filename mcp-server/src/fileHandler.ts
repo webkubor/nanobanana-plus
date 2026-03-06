@@ -71,9 +71,11 @@ export class FileHandler {
 
   static generateFilename(
     prompt: string,
+    modelName: string = 'unknown',
     format: 'png' | 'jpeg' = 'png',
     index: number = 0,
     aspectRatio: string = '1:1',
+    customFileName?: string
   ): string {
     const now = new Date();
     const year = now.getFullYear();
@@ -82,15 +84,23 @@ export class FileHandler {
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
-    const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+    const timestamp = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 
-    // Create user-friendly filename from prompt
-    let baseName = prompt
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '') // Remove special characters
-      .replace(/\s+/g, '_') // Replace spaces with underscores
-      .substring(0, 32) // Limit to 32 characters
-      .replace(/^_|_$/g, ''); // Remove leading/trailing underscores
+    const rawBaseName = customFileName || prompt;
+    const normalizedBaseName = customFileName
+      ? rawBaseName
+        .toLowerCase()
+        .replace(/[^a-z0-9_\-\s]/g, '') // Preserve separators for explicit custom names
+        .replace(/[\s_]+/g, '_')
+        .replace(/-+/g, '-')
+      : rawBaseName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '_');
+
+    let baseName = normalizedBaseName
+      .substring(0, customFileName ? 64 : 32)
+      .replace(/^[_-]+|[_-]+$/g, '');
 
     if (!baseName) {
       baseName = 'generated_image';
@@ -98,15 +108,22 @@ export class FileHandler {
 
     const extension = format === 'jpeg' ? 'jpg' : 'png';
     const cleanRatio = aspectRatio.replace(':', '-');
+    
+    // Clean model name for filename
+    const cleanModel = modelName
+      .replace('imagen-4.0-', 'i4-')
+      .replace('-generate-001', '')
+      .replace('-image-preview', '')
+      .replace('gemini-', 'g-');
 
-    // Construct elegant filename: 20240306_120000_prompt_slug_[16-9].png
+    // Construct elegant filename: [model]_YYYYMMDD_HHMMSS_name_[ratio].png
     const outputPath = this.ensureOutputDirectory();
-    let fileName = `${timestamp}_${baseName}_[${cleanRatio}].${extension}`;
+    let fileName = `[${cleanModel}]_${timestamp}_${baseName}_[${cleanRatio}].${extension}`;
     let counter = index > 0 ? index : 1;
 
     // Check for existing files and add counter if needed
     while (fs.existsSync(path.join(outputPath, fileName))) {
-      fileName = `${timestamp}_${baseName}_${counter}_[${cleanRatio}].${extension}`;
+      fileName = `[${cleanModel}]_${timestamp}_${baseName}_${counter}_[${cleanRatio}].${extension}`;
       counter++;
     }
 

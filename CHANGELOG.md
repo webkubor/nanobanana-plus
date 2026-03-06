@@ -6,6 +6,21 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 ---
 
+## [1.2.1] — 2026-03-06 🍌+ Security & Organization
+
+### 🔒 Security
+
+- **Hardened `.gitignore`**: Now blocks `.env*`, `*.key`, `*.pem`, `credentials.json`, and debug logs to prevent accidental credential leakage.
+- **Sanitized Tests**: Removed hardcoded API keys from test scripts and switched to environment variables.
+
+### 🏗️ Organization
+
+- **Test Directory**: Moved all standalone test scripts (`test_gen.js`, `test_gen_now.js`, etc.) into a dedicated `mcp-server/test/` directory.
+
+### 📝 Documentation
+
+- Updated `README.md`, `README.zh-CN.md`, and `GEMINI.md` with detailed usage for model switching and aspect ratio control.
+
 ## [1.2.0] — 2026-03-05 🍌+ Imagen 4 Upgrade & predict API
 
 ### ✨ Added

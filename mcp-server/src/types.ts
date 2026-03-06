@@ -28,6 +28,8 @@ export interface ImageGenerationRequest {
   format?: 'grid' | 'separate';
   fileFormat?: 'png' | 'jpeg';
   seed?: number;
+  // Custom export filename
+  customFileName?: string;
   // Preview options
   preview?: boolean;
   noPreview?: boolean;

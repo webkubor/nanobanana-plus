@@ -7,7 +7,7 @@
 [中文文档](./README.zh-CN.md)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](gemini-extension.json)
+[![Version](https://img.shields.io/badge/version-1.0.12-brightgreen.svg)](gemini-extension.json)
 [![Stars](https://img.shields.io/github/stars/webkubor/nanobanana-plus?style=flat&color=yellow)](https://github.com/webkubor/nanobanana-plus/stargazers)
 [![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-Extension-4285F4?logo=google)](https://geminicli.com/extensions/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
@@ -118,6 +118,26 @@ export NANOBANANA_MODEL=gemini-3-pro-image-preview
 | `1:1` | avatar / square social post |
 | `4:3` | classic landscape |
 | `3:4` | classic portrait |
+
+### Prompt Tip
+
+When you already pass `aspectRatio`, do not repeat `16:9`, `21:9`, `9:16`, etc. inside the prompt. Keep ratio control in the parameter only.
+
+Original command:
+
+```bash
+generate_image(prompt="A cinematic 21:9 ultra-wide background image. A close-up of traditional Han Dynasty dark slate roof tiles under heavily pouring rain at night. Water splashing dramatically off the eaves in slow motion. Deep indigo and pitch black color grading with a very faint, distant warm lantern glow reflecting on the wet stone. 35mm film grain, moody, desaturated. No characters, no text. Perfect for a clean, dark website hero background.", model="gemini-3.1-flash-image-preview", aspectRatio="21:9")
+```
+
+Optimized command:
+
+```bash
+generate_image(prompt="A cinematic ultra-wide background image. A close-up of traditional Han Dynasty dark slate roof tiles under heavily pouring rain at night. Water splashing dramatically off the eaves in slow motion. Deep indigo and pitch black color grading with a very faint, distant warm lantern glow reflecting on the wet stone. 35mm film grain, moody, desaturated. No characters, no text. Perfect for a clean, dark website hero background.", model="gemini-3.1-flash-image-preview", aspectRatio="21:9")
+```
+
+Generated sample:
+
+![Roof rain 21:9 sample](./docs/samples/roof-rain-21-9.png)
 
 ---
 
@@ -236,6 +256,24 @@ export GOOGLE_API_KEY=<your_key>
 | `generate_diagram` | Generate diagrams/flows/architecture visuals |
 | `check_auth_status` | Check if key is configured and ready |
 | `configure_api_key` | Input and validate API key at runtime for current session |
+
+---
+
+---
+
+## 📝 Changelog
+
+### v1.0.12 (2026-03-06)
+
+- **Security**: Hardened `.gitignore` to prevent accidental leakage of sensitive files (`.env`, `*.key`, etc.).
+- **Organization**: Moved test scripts to `mcp-server/test` directory.
+- **Documentation**: Updated `README` and `GEMINI.md` with new features and detailed usage.
+
+### v1.0.11 (2026-03-05)
+
+- **New Feature**: Added support for Imagen 4 Ultra and Fast models via `predict` API.
+- **Improved**: Enhanced aspect ratio control for all supported models.
+- **Models**: Added `imagen-4.0-ultra-generate-001` and `imagen-4.0-fast-generate-001`.
 
 ---
 

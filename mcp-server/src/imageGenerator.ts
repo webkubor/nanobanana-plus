@@ -1,8 +1,3 @@
-/**
- * @license
- * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
 
 import { GoogleGenAI } from '@google/genai';
 import { FileHandler } from './fileHandler.js';
@@ -132,10 +127,22 @@ export class ImageGenerator {
     sampleCount: number = 1,
   ): Promise<string[]> {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${encodeURIComponent(apiKey)}`;
-    const parameters: Record<string, unknown> = { sampleCount };
+    
+    // For Nano Banana models (gemini-3*), we use imageConfig inside parameters
+    const parameters: Record<string, any> = { sampleCount };
+    
     if (aspectRatio) {
-      parameters['aspectRatio'] = aspectRatio;
+      if (model.includes('gemini-3')) {
+        parameters.imageConfig = {
+          aspectRatio,
+          imageSize: '1K'
+        };
+      } else {
+        // Imagen 4 standard
+        parameters.aspectRatio = aspectRatio;
+      }
     }
+
     const body = JSON.stringify({
       instances: [{ prompt }],
       parameters,
@@ -167,6 +174,82 @@ export class ImageGenerator {
         results.push(pred.bytesBase64Encoded);
       }
     }
+    return results;
+  }
+
+  private async generateGeminiViaRest(
+    prompt: string,
+    model: string,
+    apiKey: string,
+    aspectRatio?: string,
+    imageSize: '1K' | '2K' | '4K' = '1K',
+  ): Promise<string[]> {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    const generationConfig: Record<string, unknown> = {
+      responseModalities: ['TEXT', 'IMAGE'],
+      imageConfig: {
+        imageSize,
+        ...(aspectRatio ? { aspectRatio } : {}),
+      },
+    };
+
+    const body = JSON.stringify({
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig,
+    });
+
+    console.error(`DEBUG - Using generateContent REST API for model: ${model}`);
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'x-goog-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      let errMsg = `generateContent REST API error ${response.status}`;
+      try {
+        const payload = (await response.json()) as { error?: { message?: string } };
+        errMsg = payload.error?.message || errMsg;
+      } catch { /* ignore */ }
+      throw new Error(errMsg);
+    }
+
+    const json = (await response.json()) as {
+      candidates?: Array<{
+        content?: {
+          parts?: Array<{
+            inlineData?: { data?: string; mimeType?: string };
+            inline_data?: { data?: string; mime_type?: string };
+            text?: string;
+          }>;
+        };
+      }>;
+    };
+
+    const results: string[] = [];
+
+    for (const candidate of json.candidates || []) {
+      for (const part of candidate.content?.parts || []) {
+        const inlineData = part.inlineData || part.inline_data;
+        if (inlineData?.data && inlineData.data.length > 100) {
+          results.push(inlineData.data);
+          continue;
+        }
+
+        if (part.text && this.isValidBase64ImageData(part.text)) {
+          results.push(part.text);
+        }
+      }
+    }
+
     return results;
   }
 
@@ -610,9 +693,11 @@ export class ImageGenerator {
             for (const imageBase64 of base64List) {
               const filename = FileHandler.generateFilename(
                 request.styles || request.variations ? currentPrompt : request.prompt,
-                request.fileFormat,
+                effectiveModel,
+                request.fileFormat || 'png',
                 i,
                 aspectRatio || '1:1',
+                request.customFileName
               );
               const fullPath = await FileHandler.saveImageFromBase64(
                 imageBase64,
@@ -623,13 +708,46 @@ export class ImageGenerator {
               console.error('DEBUG - Image saved (predict):', fullPath);
               break;
             }
+          } else if (this.hasApiKey()) {
+            const base64List = await this.generateGeminiViaRest(
+              currentPrompt,
+              effectiveModel,
+              this.authConfig.apiKey,
+              aspectRatio,
+            );
+
+            for (const imageBase64 of base64List) {
+              const filename = FileHandler.generateFilename(
+                request.styles || request.variations ? currentPrompt : request.prompt,
+                effectiveModel,
+                request.fileFormat || 'png',
+                i,
+                aspectRatio || '1:1',
+                request.customFileName
+              );
+              const fullPath = await FileHandler.saveImageFromBase64(
+                imageBase64,
+                outputPath,
+                filename,
+              );
+              generatedFiles.push(fullPath);
+              console.error('DEBUG - Image saved (generateContent REST):', fullPath);
+              break;
+            }
           } else {
             // ---- 普通模型路径：使用 generateContent ----
-            const generateConfig: Record<string, unknown> = {};
+            const generateConfig: any = {
+              responseModalities: ['TEXT', 'IMAGE'],
+            };
+
             if (aspectRatio) {
-              generateConfig['imageConfig'] = { aspectRatio };
+              generateConfig.imageConfig = {
+                aspectRatio,
+                imageSize: '1K',
+              };
             }
-            const response = await this.ai.models.generateContent({
+
+            const response = await (this.ai as any).models.generateContent({
               model: effectiveModel,
               contents: [
                 {
@@ -637,8 +755,8 @@ export class ImageGenerator {
                   parts: [{ text: currentPrompt }],
                 },
               ],
-              ...(Object.keys(generateConfig).length > 0 ? { config: generateConfig } : {}),
-            } as Parameters<typeof this.ai.models.generateContent>[0]);
+              config: generateConfig,
+            });
 
             console.error('DEBUG - API Response structure for variation', i + 1);
 
@@ -660,9 +778,11 @@ export class ImageGenerator {
                 if (imageBase64) {
                   const filename = FileHandler.generateFilename(
                     request.styles || request.variations ? currentPrompt : request.prompt,
-                    request.fileFormat,
+                    effectiveModel,
+                    request.fileFormat || 'png',
                     i,
                     aspectRatio || '1:1',
+                    request.customFileName
                   );
                   const fullPath = await FileHandler.saveImageFromBase64(
                     imageBase64,
@@ -851,9 +971,11 @@ export class ImageGenerator {
               if (imageBase64) {
                 const filename = FileHandler.generateFilename(
                   `${type}step${stepNumber}${request.prompt}`,
-                  'png', // Stories default to png
+                  this.resolveModel(request),
+                  'png',
                   0,
                   aspectRatio || '1:1',
+                  request.customFileName
                 );
                 const fullPath = await FileHandler.saveImageFromBase64(
                   imageBase64,
@@ -1000,9 +1122,11 @@ export class ImageGenerator {
           if (resultImageBase64) {
             const filename = FileHandler.generateFilename(
               `${request.mode}_${request.prompt}`,
-              'png', // Edits default to png
+              this.resolveModel(request),
+              'png',
               0,
               aspectRatio || '1:1',
+              request.customFileName
             );
             const fullPath = await FileHandler.saveImageFromBase64(
               resultImageBase64,

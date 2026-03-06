@@ -1,3 +1,15 @@
 dist/
 node_modules/
 nanobanana-output/
+banana-plus/
+
+# Secrets and credentials
+.env*
+*.key
+*.pem
+credentials.json
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

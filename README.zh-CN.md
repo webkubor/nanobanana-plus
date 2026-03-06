@@ -7,7 +7,7 @@
 *The first Gemini CLI extension with per-call Nano Banana 2 / Pro switching*
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen.svg)](gemini-extension.json)
+[![Version](https://img.shields.io/badge/version-1.0.12-brightgreen.svg)](gemini-extension.json)
 [![Stars](https://img.shields.io/github/stars/webkubor/nanobanana-plus?style=flat&color=yellow)](https://github.com/webkubor/nanobanana-plus/stargazers)
 [![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-Extension-4285F4?logo=google)](https://geminicli.com/extensions/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
@@ -125,6 +125,26 @@ export NANOBANANA_MODEL=gemini-3-pro-image-preview
 | `1:1` | ⬜ 正方形 / 头像 / Instagram |
 | `4:3` | 🖼️ 传统横版 |
 | `3:4` | 📄 传统竖版 |
+
+### Prompt 小技巧
+
+如果你已经传了 `aspectRatio`，就不要再在 prompt 里重复写 `16:9`、`21:9`、`9:16` 这类比例词。比例控制只放在参数里，prompt 只描述画面内容。
+
+原始命令：
+
+```bash
+generate_image(prompt="A cinematic 21:9 ultra-wide background image. A close-up of traditional Han Dynasty dark slate roof tiles under heavily pouring rain at night. Water splashing dramatically off the eaves in slow motion. Deep indigo and pitch black color grading with a very faint, distant warm lantern glow reflecting on the wet stone. 35mm film grain, moody, desaturated. No characters, no text. Perfect for a clean, dark website hero background.", model="gemini-3.1-flash-image-preview", aspectRatio="21:9")
+```
+
+优化后命令：
+
+```bash
+generate_image(prompt="A cinematic ultra-wide background image. A close-up of traditional Han Dynasty dark slate roof tiles under heavily pouring rain at night. Water splashing dramatically off the eaves in slow motion. Deep indigo and pitch black color grading with a very faint, distant warm lantern glow reflecting on the wet stone. 35mm film grain, moody, desaturated. No characters, no text. Perfect for a clean, dark website hero background.", model="gemini-3.1-flash-image-preview", aspectRatio="21:9")
+```
+
+实测出图：
+
+![屋檐夜雨 21:9 示例](./docs/samples/roof-rain-21-9.png)
 
 ---
 
@@ -245,6 +265,24 @@ export GOOGLE_API_KEY="your_key"               # 备选
 | `generate_pattern` | 生成无缝平铺图案 |
 | `generate_story` | 生成连贯故事分镜图序列 |
 | `generate_diagram` | 生成流程图/架构图 |
+
+---
+
+---
+
+## 📝 更新日志 / Changelog
+
+### v1.0.12 (2026-03-06)
+
+- **安全增强**：强化 `.gitignore`，防止误传敏感文件（`.env`, `*.key` 等）。
+- **结构优化**：将测试脚本移动至 `mcp-server/test` 目录。
+- **文档更新**：同步更新 `README` 和 `GEMINI.md`，增加新功能详细说明。
+
+### v1.0.11 (2026-03-05)
+
+- **新功能**：支持通过 `predict` API 调用 Imagen 4 Ultra 和 Fast 模型。
+- **功能增强**：提升所有支持模型的宽高比控制精度。
+- **新增模型**：加入 `imagen-4.0-ultra-generate-001` 和 `imagen-4.0-fast-generate-001`。
 
 ---
 
