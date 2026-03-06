@@ -20,6 +20,8 @@ export interface ImageGenerationRequest {
   model?: NanoBananaModel;
   // Aspect ratio (e.g. "16:9", "1:1", "4:3", "9:16")
   aspectRatio?: string;
+  // Common presets that map to production-friendly banner ratios
+  aspectRatioPreset?: 'web-hero' | 'web-banner' | 'section-banner';
   // Batch generation options
   styles?: string[];
   variations?: string[];

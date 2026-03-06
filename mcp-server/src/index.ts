@@ -147,6 +147,12 @@ class NanoBananaServer {
                   description:
                     '宽高比（可选）: 如 "16:9"、"1:1"、"4:3"、"9:16"、"3:4"。不填则使用模型默认比例。',
                 },
+                aspectRatioPreset: {
+                  type: 'string',
+                  enum: ['web-hero', 'web-banner', 'section-banner'],
+                  description:
+                    '网页横幅比例预设（可选）: web-hero=21:9 / web-banner=16:9 / section-banner=3:1。',
+                },
                 preview: {
                   type: 'boolean',
                   description:
@@ -502,6 +508,8 @@ class NanoBananaServer {
               seed: args?.seed as number,
               model: args?.model as ImageGenerationRequest['model'],
               aspectRatio: args?.aspectRatio as string,
+              aspectRatioPreset:
+                args?.aspectRatioPreset as ImageGenerationRequest['aspectRatioPreset'],
               preview: args?.preview as boolean,
               noPreview:
                 (args?.noPreview as boolean) ||

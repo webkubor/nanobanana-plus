@@ -27,6 +27,15 @@ export class ImageGenerator {
   private static readonly DEFAULT_MODEL = 'gemini-3.1-flash-image-preview';
   private static readonly MODEL_LIST_ENDPOINT =
     'https://generativelanguage.googleapis.com/v1beta/models';
+  private static readonly ASPECT_RATIO_PRESETS = {
+    'web-hero': '21:9',
+    'web-banner': '16:9',
+    'section-banner': '3:1',
+  } as const;
+  private static readonly IMAGEN_UNSUPPORTED_FALLBACKS = {
+    'imagen-4.0-ultra-generate-001': 'gemini-3-pro-image-preview',
+    'imagen-4.0-fast-generate-001': 'gemini-3.1-flash-image-preview',
+  } as const;
 
   constructor(authConfig: AuthConfig) {
     this.authConfig = authConfig;
@@ -45,9 +54,73 @@ export class ImageGenerator {
     return model;
   }
 
+  private resolveAspectRatio(
+    request: ImageGenerationRequest,
+  ): string | undefined {
+    if (request.aspectRatio) {
+      return request.aspectRatio;
+    }
+
+    if (request.aspectRatioPreset) {
+      return ImageGenerator.ASPECT_RATIO_PRESETS[request.aspectRatioPreset];
+    }
+
+    return undefined;
+  }
+
+  private resolveEffectiveModel(
+    request: ImageGenerationRequest,
+    aspectRatio?: string,
+  ): {
+    requestedModel: string;
+    effectiveModel: string;
+    fallbackReason?: string;
+  } {
+    const requestedModel = this.resolveModel(request);
+
+    if (
+      aspectRatio === '21:9' &&
+      requestedModel in ImageGenerator.IMAGEN_UNSUPPORTED_FALLBACKS
+    ) {
+      const effectiveModel =
+        ImageGenerator.IMAGEN_UNSUPPORTED_FALLBACKS[
+        requestedModel as keyof typeof ImageGenerator.IMAGEN_UNSUPPORTED_FALLBACKS
+        ];
+      return {
+        requestedModel,
+        effectiveModel,
+        fallbackReason:
+          `Requested model ${requestedModel} does not support 21:9 output via the Imagen API. ` +
+          `Switched automatically to ${effectiveModel} so the request can still produce a 21:9 image.`,
+      };
+    }
+
+    return { requestedModel, effectiveModel: requestedModel };
+  }
+
   // 判断是否为需要 predict 协议的 Imagen 4 模型
   private isImagenPredictModel(model: string): boolean {
     return model.startsWith('imagen-4.');
+  }
+
+  private getModelLabel(model: string): string {
+    if (model.startsWith('imagen-4.') && model.includes('ultra')) {
+      return 'Imagen 4 Ultra';
+    }
+
+    if (model.startsWith('imagen-4.')) {
+      return 'Imagen 4 Fast';
+    }
+
+    if (model.includes('pro')) {
+      return 'Nano Banana Pro';
+    }
+
+    if (model.includes('3.1')) {
+      return 'Nano Banana 2';
+    }
+
+    return 'Nano Banana v1';
   }
 
   // 使用 predict REST 接口调用 Imagen 4 Ultra / Fast
@@ -195,31 +268,32 @@ export class ImageGenerator {
           '⚠️ GEMINI_API_KEY/GOOGLE_API_KEY detected but ignored. Set NANOBANANA_ALLOW_FALLBACK_KEYS=true to allow fallback keys.',
         );
       }
-      return { apiKey: '', keyType: 'GEMINI_API_KEY', source: 'none' };
     }
 
-    const geminiKey = process.env.GEMINI_API_KEY;
-    if (geminiKey) {
-      console.error(
-        '✓ Found GEMINI_API_KEY environment variable (fallback)',
-      );
-      return {
-        apiKey: geminiKey,
-        keyType: 'GEMINI_API_KEY',
-        source: 'GEMINI_API_KEY',
-      };
-    }
+    if (allowFallback) {
+      const geminiKey = process.env.GEMINI_API_KEY;
+      if (geminiKey) {
+        console.error(
+          '✓ Found GEMINI_API_KEY environment variable (fallback)',
+        );
+        return {
+          apiKey: geminiKey,
+          keyType: 'GEMINI_API_KEY',
+          source: 'GEMINI_API_KEY',
+        };
+      }
 
-    const googleKey = process.env.GOOGLE_API_KEY;
-    if (googleKey) {
-      console.error(
-        '✓ Found GOOGLE_API_KEY environment variable (fallback)',
-      );
-      return {
-        apiKey: googleKey,
-        keyType: 'GOOGLE_API_KEY',
-        source: 'GOOGLE_API_KEY',
-      };
+      const googleKey = process.env.GOOGLE_API_KEY;
+      if (googleKey) {
+        console.error(
+          '✓ Found GOOGLE_API_KEY environment variable (fallback)',
+        );
+        return {
+          apiKey: googleKey,
+          keyType: 'GOOGLE_API_KEY',
+          source: 'GOOGLE_API_KEY',
+        };
+      }
     }
 
     const allowOAuthAdc =
@@ -506,6 +580,9 @@ export class ImageGenerator {
       const outputPath = FileHandler.ensureOutputDirectory();
       const generatedFiles: string[] = [];
       const prompts = this.buildBatchPrompts(request);
+      const aspectRatio = this.resolveAspectRatio(request);
+      const { requestedModel, effectiveModel, fallbackReason } =
+        this.resolveEffectiveModel(request, aspectRatio);
       let firstError: string | null = null;
 
       console.error(`DEBUG - Generating ${prompts.length} image variation(s)`);
@@ -518,18 +595,16 @@ export class ImageGenerator {
         );
 
         try {
-          const usedModelForCall = this.resolveModel(request);
-
-          if (this.isImagenPredictModel(usedModelForCall)) {
+          if (this.isImagenPredictModel(effectiveModel)) {
             // ---- Imagen 4 路径：使用 predict REST 接口 ----
             if (!this.hasApiKey()) {
               throw new Error('Imagen 4 predict 接口需要显式 API Key，无法使用 OAuth/ADC。');
             }
             const base64List = await this.generateViaPredict(
               currentPrompt,
-              usedModelForCall,
+              effectiveModel,
               this.authConfig.apiKey,
-              request.aspectRatio,
+              aspectRatio,
               1,
             );
             for (const imageBase64 of base64List) {
@@ -537,6 +612,7 @@ export class ImageGenerator {
                 request.styles || request.variations ? currentPrompt : request.prompt,
                 request.fileFormat,
                 i,
+                aspectRatio || '1:1',
               );
               const fullPath = await FileHandler.saveImageFromBase64(
                 imageBase64,
@@ -550,11 +626,11 @@ export class ImageGenerator {
           } else {
             // ---- 普通模型路径：使用 generateContent ----
             const generateConfig: Record<string, unknown> = {};
-            if (request.aspectRatio) {
-              generateConfig['imageConfig'] = { aspectRatio: request.aspectRatio };
+            if (aspectRatio) {
+              generateConfig['imageConfig'] = { aspectRatio };
             }
             const response = await this.ai.models.generateContent({
-              model: usedModelForCall,
+              model: effectiveModel,
               contents: [
                 {
                   role: 'user',
@@ -586,6 +662,7 @@ export class ImageGenerator {
                     request.styles || request.variations ? currentPrompt : request.prompt,
                     request.fileFormat,
                     i,
+                    aspectRatio || '1:1',
                   );
                   const fullPath = await FileHandler.saveImageFromBase64(
                     imageBase64,
@@ -631,23 +708,17 @@ export class ImageGenerator {
       // Handle preview if requested
       await this.handlePreview(generatedFiles, request);
 
-      const usedModel = this.resolveModel(request);
-      const modelLabel = usedModel.startsWith('imagen-4.') && usedModel.includes('ultra')
-        ? 'Imagen 4 Ultra 💎'
-        : usedModel.startsWith('imagen-4.')
-          ? 'Imagen 4 Fast 🚀'
-          : usedModel.includes('pro')
-            ? 'Nano Banana Pro 🎨'
-            : usedModel.includes('3.1')
-              ? 'Nano Banana 2 ⚡'
-              : 'Nano Banana v1 🔄';
+      const modelLabel = this.getModelLabel(effectiveModel);
 
       return {
         success: true,
         message: `✅ Successfully generated ${generatedFiles.length} image(s)\n` +
           `🔐 Auth: ${this.getAuthModeLabel()}\n` +
-          `🍌 Model: ${modelLabel} (${usedModel})\n` +
-          (request.aspectRatio ? `📐 Aspect ratio: ${request.aspectRatio}\n` : '') +
+          `🍌 Model: ${modelLabel} (${effectiveModel})\n` +
+          (fallbackReason
+            ? `ℹ️ Auto-switch: requested ${requestedModel}, but ${fallbackReason}\n`
+            : '') +
+          (aspectRatio ? `📐 Aspect ratio: ${aspectRatio}\n` : '') +
           `📁 Saved to: ${generatedFiles.join(', ')}`,
         generatedFiles,
       };
@@ -677,6 +748,10 @@ export class ImageGenerator {
 
     if (errorMessage.includes('quota exceeded')) {
       return 'API quota exceeded. Please check your usage and limits in the Google Cloud console.';
+    }
+
+    if (errorMessage.includes('insufficient authentication scopes')) {
+      return 'Authentication failed: OAuth/ADC credentials were found, but they do not include the scope required for Gemini image generation.';
     }
 
     // Check for GoogleGenerativeAIResponseError
@@ -714,6 +789,7 @@ export class ImageGenerator {
     try {
       await this.ensureAuthenticationReady();
       const outputPath = FileHandler.ensureOutputDirectory();
+      const aspectRatio = this.resolveAspectRatio(request);
       const generatedFiles: string[] = [];
       const steps = request.outputCount || 4;
       const type = args?.type || 'story';
@@ -777,6 +853,7 @@ export class ImageGenerator {
                   `${type}step${stepNumber}${request.prompt}`,
                   'png', // Stories default to png
                   0,
+                  aspectRatio || '1:1',
                 );
                 const fullPath = await FileHandler.saveImageFromBase64(
                   imageBase64,
@@ -872,6 +949,7 @@ export class ImageGenerator {
       }
 
       const outputPath = FileHandler.ensureOutputDirectory();
+      const aspectRatio = this.resolveAspectRatio(request);
       const imageBase64 = await FileHandler.readImageAsBase64(
         fileResult.filePath!,
       );
@@ -924,6 +1002,7 @@ export class ImageGenerator {
               `${request.mode}_${request.prompt}`,
               'png', // Edits default to png
               0,
+              aspectRatio || '1:1',
             );
             const fullPath = await FileHandler.saveImageFromBase64(
               resultImageBase64,
