@@ -86,26 +86,6 @@ export class FileHandler {
     const seconds = String(now.getSeconds()).padStart(2, '0');
     const timestamp = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
 
-    const rawBaseName = customFileName || prompt;
-    const normalizedBaseName = customFileName
-      ? rawBaseName
-        .toLowerCase()
-        .replace(/[^a-z0-9_\-\s]/g, '') // Preserve separators for explicit custom names
-        .replace(/[\s_]+/g, '_')
-        .replace(/-+/g, '-')
-      : rawBaseName
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, '_');
-
-    let baseName = normalizedBaseName
-      .substring(0, customFileName ? 64 : 32)
-      .replace(/^[_-]+|[_-]+$/g, '');
-
-    if (!baseName) {
-      baseName = 'generated_image';
-    }
-
     const extension = format === 'jpeg' ? 'jpg' : 'png';
     const cleanRatio = aspectRatio.replace(':', '-');
     
@@ -116,14 +96,31 @@ export class FileHandler {
       .replace('-image-preview', '')
       .replace('gemini-', 'g-');
 
-    // Construct elegant filename: [model]_YYYYMMDD_HHMMSS_name_[ratio].png
+    const rawBaseName = customFileName;
+    const normalizedBaseName = rawBaseName
+      ? rawBaseName
+        .toLowerCase()
+        .replace(/[^a-z0-9_\-\s]/g, '')
+        .replace(/[\s_]+/g, '_')
+        .replace(/-+/g, '-')
+      : '';
+
+    const baseName = normalizedBaseName
+      .substring(0, 64)
+      .replace(/^[_-]+|[_-]+$/g, '');
+
+    // Default auto-naming uses the effective model, not prompt text.
     const outputPath = this.ensureOutputDirectory();
-    let fileName = `[${cleanModel}]_${timestamp}_${baseName}_[${cleanRatio}].${extension}`;
+    let fileName = baseName
+      ? `[${cleanModel}]_${timestamp}_${baseName}_[${cleanRatio}].${extension}`
+      : `[${cleanModel}]_${timestamp}_[${cleanRatio}].${extension}`;
     let counter = index > 0 ? index : 1;
 
     // Check for existing files and add counter if needed
     while (fs.existsSync(path.join(outputPath, fileName))) {
-      fileName = `[${cleanModel}]_${timestamp}_${baseName}_${counter}_[${cleanRatio}].${extension}`;
+      fileName = baseName
+        ? `[${cleanModel}]_${timestamp}_${baseName}_${counter}_[${cleanRatio}].${extension}`
+        : `[${cleanModel}]_${timestamp}_${counter}_[${cleanRatio}].${extension}`;
       counter++;
     }
 

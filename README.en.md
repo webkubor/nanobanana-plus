@@ -85,15 +85,18 @@ Generate a cyberpunk night market scene, use pro model, aspect ratio 16:9
 **Option C: install into Codex CLI**
 
 ```bash
-# Add from npm / packed tarball via npx
-codex mcp add nanobanana-plus -- npx -y nanobanana-extension
+# Recommended: install globally with pnpm, then register the executable with Codex
+pnpm add -g nanobanana-extension
+codex mcp add nanobanana-plus -- nanobanana-plus
+```
 
-# Or after a global install
+```bash
+# npm fallback
 npm install -g nanobanana-extension
 codex mcp add nanobanana-plus -- nanobanana-plus
 ```
 
-> `nanobanana-extension` is the npm package name. `nanobanana-plus` is the executable that starts the MCP server for Codex CLI.
+> `nanobanana-extension` is the npm package name. `nanobanana-plus` is the executable that starts the MCP server for Codex CLI. For Codex, a global install is recommended over `pnpm dlx` / `npx` so the MCP server does not re-download on each launch.
 
 ---
 
@@ -311,8 +314,9 @@ Focus areas:
 
 ```bash
 git clone https://github.com/webkubor/nanobanana-plus
-cd nanobanana-plus/mcp-server
-npm install && npm run dev
+cd nanobanana-plus
+pnpm install
+pnpm run dev
 ```
 
 Core files:

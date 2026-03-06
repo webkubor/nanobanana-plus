@@ -102,7 +102,7 @@ if [ -n "$GEMINI_CMD" ]; then
   echo ""
 else
   echo -e "${YELLOW}  未检测到 Gemini CLI，请先安装：${RESET}"
-  echo "  npm install -g @google/gemini-cli"
+  echo "  pnpm add -g @google/gemini-cli"
   echo ""
   echo -e "  安装后运行："
   echo "  gemini extensions install https://github.com/webkubor/nanobanana-plus"
