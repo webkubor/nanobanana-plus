@@ -6,36 +6,47 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 ---
 
-## [1.2.1] — 2026-03-06 🍌+ Security & Organization
+## [1.3.0] — 2026-03-06 🍌+ Packaging & Codex CLI Support / 打包支持与 Codex 集成
 
-### 🔒 Security
+### 📦 Packaging / 打包
 
-- **Hardened `.gitignore`**: Now blocks `.env*`, `*.key`, `*.pem`, `credentials.json`, and debug logs to prevent accidental credential leakage.
-- **Sanitized Tests**: Removed hardcoded API keys from test scripts and switched to environment variables.
+- **NPM Support / NPM 支持**: Added `bin` executable and `files` whitelist for professional NPM distribution. / 增加了 `bin` 可执行配置和 `files` 白名单，支持标准的 NPM 发布。
+- **Executable / 可执行命令**: Defined `nanobanana-plus` and `nanobanana-extension` binaries. / 定义了 `nanobanana-plus` 和 `nanobanana-extension` 全局命令。
+- **Postinstall / 安装后脚本**: Added automated dependency installation via `postinstall` script. / 增加了安装后自动构建依赖的 `postinstall` 脚本。
 
-### 🏗️ Organization
+### 🧭 Integration / 集成
 
-- **Test Directory**: Moved all standalone test scripts (`test_gen.js`, `test_gen_now.js`, etc.) into a dedicated `mcp-server/test/` directory.
+- **Codex CLI Support / Codex CLI 支持**: Added official support for adding as an MCP tool in Codex CLI via `npx`. / 增加了对 Codex CLI 的官方支持，支持通过 `npx` 直接添加为 MCP 工具。
 
-### 📝 Documentation
+### 🛠️ Scripts / 脚本
 
-- Updated `README.md`, `README.zh-CN.md`, and `GEMINI.md` with detailed usage for model switching and aspect ratio control.
+- **Workspace Management / 工作区管理**: Optimized root scripts to use `npm --prefix` for better reliability. / 优化了根目录脚本，使用 `npm --prefix` 提高多包管理可靠性。
 
-## [1.2.0] — 2026-03-05 🍌+ Imagen 4 Upgrade & predict API
+---
 
-### ✨ Added
+## [1.2.1] — 2026-03-06 🍌+ Security & Organization / 安全增强与结构优化
 
-#### 🖼️ Imagen 4 Ultra & Fast Support (via predict REST API)
+### 🔒 Security / 安全
 
-Full support for the next-generation Imagen 4 models, utilizing direct `predict` REST API payload structures.
+- **Hardened `.gitignore` / 强化忽略规则**: Now blocks `.env*`, `*.key`, `*.pem`, `credentials.json`, and debug logs. / 增加了对 `.env`、秘钥文件及调试日志的自动忽略，防止秘钥泄露。
+- **Sanitized Tests / 清理测试脚本**: Removed hardcoded API keys from test scripts. / 从测试脚本中移除了硬编码的 API Key。
 
-- `imagen-4.0-ultra-generate-001`: Top photorealism and stunning details.
-- `imagen-4.0-fast-generate-001`: Incredible speed and quality combined.
-*(Note: Requires a Gemini API Key with Pro access; OAuth/ADC is not supported for predict models).*
+### 🏗️ Organization / 结构
 
-#### 🎨 Output Sample (Imagen 4 Ultra)
+- **Test Directory / 测试目录**: Moved test scripts into a dedicated `mcp-server/test/` directory. / 将所有独立测试脚本移动至专用的 `mcp-server/test/` 目录。
 
-![Imagen 4 Ultra Sample](https://img.webkubor.online/roof-rain-21-9.png)
+### 📝 Documentation / 文档
+
+- Updated `README.md`, `README.zh-CN.md`, and `GEMINI.md` with detailed bilingual usage. / 同步更新了中英文文档，增加了详细的使用说明。
+
+---
+
+## [1.2.0] — 2026-03-05 🍌+ Imagen 4 Upgrade & predict API / Imagen 4 升级
+
+### ✨ Added / 新增
+
+- **Imagen 4 Ultra & Fast**: Full support for next-gen Imagen 4 models via `predict` API. / 通过 `predict` API 全面支持 Imagen 4 Ultra 和 Fast 模型。
+- **Output Sample / 效果样例**: Added Imagen 4 Ultra proof-of-work image to documentation. / 在文档中增加了 Imagen 4 Ultra 的实测出图。
 
 ---
 

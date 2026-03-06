@@ -74,6 +74,19 @@ gemini
 Generate a cyberpunk night market scene, use pro model, aspect ratio 16:9
 ```
 
+**Option C: install into Codex CLI**
+
+```bash
+# Add from npm / packed tarball via npx
+codex mcp add nanobanana-plus -- npx -y nanobanana-extension
+
+# Or after a global install
+npm install -g nanobanana-extension
+codex mcp add nanobanana-plus -- nanobanana-plus
+```
+
+> `nanobanana-extension` is the npm package name. `nanobanana-plus` is the executable that starts the MCP server for Codex CLI.
+
 ---
 
 ## ✨ What's New vs nanobanana

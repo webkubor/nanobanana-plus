@@ -1,21 +1,40 @@
 {
   "name": "nanobanana-extension",
-  "version": "1.0.12",
+  "version": "1.3.0",
   "type": "module",
   "description": "Gemini CLI extension for Nano Banana models",
+  "bin": {
+    "nanobanana-extension": "./bin/nanobanana-plus.js",
+    "nanobanana-plus": "./bin/nanobanana-plus.js"
+  },
+  "files": [
+    "bin",
+    "commands",
+    "GEMINI.md",
+    "LICENSE",
+    "README.md",
+    "README.zh-CN.md",
+    "gemini-extension.json",
+    "mcp-server/dist",
+    "mcp-server/package.json",
+    "mcp-server/package-lock.json",
+    "scripts/postinstall.mjs",
+    "setup.sh"
+  ],
   "scripts": {
-    "build": "cd mcp-server && npm run build",
-    "install-deps": "cd mcp-server && npm install",
-    "dev": "cd mcp-server && npm run dev",
+    "build": "npm --prefix mcp-server run build",
+    "install-deps": "npm --prefix mcp-server install",
+    "dev": "npm --prefix mcp-server run dev",
     "format": "prettier --write .",
     "lint": "eslint . --fix",
     "lint:fix": "eslint . --fix",
     "lint:ci": "eslint . --max-warnings 0",
-    "typecheck": "cd mcp-server && npm run typecheck",
-    "test": "cd mcp-server && npm run test",
+    "typecheck": "npm --prefix mcp-server run typecheck",
+    "test": "npm --prefix mcp-server run test",
     "clean": "rm -rf mcp-server/dist && rm -rf node_modules",
     "preflight": "npm run clean && npm ci && npm run format && npm run lint || true && npm run build && npm run typecheck",
-    "postinstall": "npm run install-deps && npm run build"
+    "prepack": "npm run build",
+    "postinstall": "node ./scripts/postinstall.mjs"
   },
   "engines": {
     "node": ">=18.0.0"

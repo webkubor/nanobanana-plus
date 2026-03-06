@@ -76,6 +76,19 @@ gemini
 生成一张赛博朋克夜市，用 pro 模型，16:9 比例
 ```
 
+**方式三：安装到 Codex CLI**
+
+```bash
+# 通过 npm 包 / 打包产物接入 Codex
+codex mcp add nanobanana-plus -- npx -y nanobanana-extension
+
+# 或先全局安装，再把可执行命令注册给 Codex
+npm install -g nanobanana-extension
+codex mcp add nanobanana-plus -- nanobanana-plus
+```
+
+> `nanobanana-extension` 是 npm 包名，`nanobanana-plus` 是实际启动 MCP Server 的可执行命令。
+
 ---
 
 ## ✨ 相比 nanobanana 新增了什么 / What's New
