@@ -123,6 +123,11 @@ No restart required. Choose model per request:
 export NANOBANANA_MODEL=gemini-3-pro-image-preview
 ```
 
+> 21:9 compatibility summary:
+> - Supported: `gemini-3.1-flash-image-preview`, `gemini-3-pro-image-preview`, `gemini-2.5-flash-image`
+> - Not supported: `imagen-4.0-ultra-generate-001`, `imagen-4.0-fast-generate-001`
+> - Full test time, command, and raw API responses: [`docs/compatibility-21-9-matrix.md`](./docs/compatibility-21-9-matrix.md)
+
 ---
 
 ## 📐 Aspect Ratio
