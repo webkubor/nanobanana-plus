@@ -79,15 +79,18 @@ gemini
 **方式三：安装到 Codex CLI**
 
 ```bash
-# 通过 npm 包 / 打包产物接入 Codex
-codex mcp add nanobanana-plus -- npx -y nanobanana-extension
+# 推荐：先用 pnpm 全局安装，再把可执行命令注册给 Codex
+pnpm add -g nanobanana-extension
+codex mcp add nanobanana-plus -- nanobanana-plus
+```
 
-# 或先全局安装，再把可执行命令注册给 Codex
+```bash
+# npm 兼容方式
 npm install -g nanobanana-extension
 codex mcp add nanobanana-plus -- nanobanana-plus
 ```
 
-> `nanobanana-extension` 是 npm 包名，`nanobanana-plus` 是实际启动 MCP Server 的可执行命令。
+> `nanobanana-extension` 是 npm 包名，`nanobanana-plus` 是实际启动 MCP Server 的可执行命令。Codex CLI 场景更推荐全局安装，不建议每次启动都走 `pnpm dlx` / `npx` 临时拉包。
 
 ---
 
@@ -312,8 +315,9 @@ export GOOGLE_API_KEY="your_key"               # 备选
 
 ```bash
 git clone https://github.com/webkubor/nanobanana-plus
-cd nanobanana-plus/mcp-server
-npm install && npm run dev
+cd nanobanana-plus
+pnpm install
+pnpm run dev
 ```
 
 核心文件：

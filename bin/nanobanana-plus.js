@@ -11,7 +11,7 @@ const serverEntry = resolve(packageRoot, 'mcp-server', 'dist', 'index.js');
 
 if (!existsSync(serverEntry)) {
   console.error(
-    'nanobanana-plus MCP server build not found. Reinstall the package or run `npm run build`.',
+    'nanobanana-plus MCP server build not found. Reinstall the package or run `pnpm run build`.',
   );
   process.exit(1);
 }
