@@ -22,6 +22,10 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 - **Workspace Management / 工作区管理**: Optimized root scripts to use `npm --prefix` for better reliability. / 优化了根目录脚本，使用 `npm --prefix` 提高多包管理可靠性。
 
+### 🧪 Verified Limits / 实测限制
+
+- **21:9 compatibility matrix / 21:9 兼容性矩阵**: Documented a direct no-fallback API test for all current image models. Gemini 3.1 Flash, Gemini 3 Pro, and Gemini 2.5 Flash succeeded; Imagen 4 Ultra and Imagen 4 Fast returned `aspectRatio 21:9 is not supported`. See [`docs/compatibility-21-9-matrix.md`](./docs/compatibility-21-9-matrix.md). / 补充了当前全部图像模型的 `21:9` 直连 API 测试记录：Gemini 3.1 Flash、Gemini 3 Pro、Gemini 2.5 Flash 成功；Imagen 4 Ultra 与 Imagen 4 Fast 返回 `aspectRatio 21:9 is not supported`。详见 [`docs/compatibility-21-9-matrix.md`](./docs/compatibility-21-9-matrix.md)。
+
 ---
 
 ## [1.2.1] — 2026-03-06 🍌+ Security & Organization / 安全增强与结构优化

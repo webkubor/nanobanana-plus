@@ -132,6 +132,11 @@ codex mcp add nanobanana-plus -- nanobanana-plus
 
 > [!NOTE]
 > Imagen 4 模型使用的是 `predict` REST API 协议，必须配置拥有 Pro 权限的 `NANOBANANA_GEMINI_API_KEY`，不支持通过 OAuth/ADC 登录态自动获取。
+>
+> `21:9` 实测结论：
+> - 支持：`gemini-3.1-flash-image-preview`、`gemini-3-pro-image-preview`、`gemini-2.5-flash-image`
+> - 不支持：`imagen-4.0-ultra-generate-001`、`imagen-4.0-fast-generate-001`
+> - 详细时间、命令和原始返回见 [`docs/compatibility-21-9-matrix.md`](./docs/compatibility-21-9-matrix.md)
 
 ```bash
 # 全局默认切换到 Pro（可选）
