@@ -20,6 +20,14 @@
 
 ---
 
+## 🔗 Related Projects
+
+- [Prompt Lab](https://github.com/webkubor/prompt-lab): 面向设计师与内容团队的 AI 图像工作流与提示词知识库。
+- [CortexOS](https://github.com/webkubor/CortexOS): 用于持久化上下文、项目路由与多 Agent 协作的本地控制平面。
+- [Selected Private Products](https://github.com/webkubor/webkubor#selected-private-products): DreamFit、Boiling Snow 等私有产品把这些生图能力继续接入真实生产链路。
+
+---
+
 ## 🖼️ 实测效果 / Real Output
 
 > 原版 nanobanana **只能生成 1:1 正方形图**，nanobanana-plus 支持任意宽高比。

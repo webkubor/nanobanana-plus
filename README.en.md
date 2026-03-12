@@ -20,6 +20,14 @@
 
 ---
 
+## Related Projects
+
+- [Prompt Lab](https://github.com/webkubor/prompt-lab): a creative workflow library for AI image prompting, scene references, and production-ready guidance.
+- [CortexOS](https://github.com/webkubor/CortexOS): a local-first control plane for persistent context, project routing, and multi-agent collaboration.
+- [Selected Private Products](https://github.com/webkubor/webkubor#selected-private-products): DreamFit, Boiling Snow, and other private production systems that extend these image workflows into real shipping products.
+
+---
+
 ## 🖼️ Real Output
 
 > Original nanobanana outputs only 1:1 square images. nanobanana-plus supports arbitrary aspect ratios.
