@@ -20,6 +20,7 @@ import {
   DiagramPromptArgs,
   AuthConfig,
 } from './types.js';
+import { SystemProfileCollector } from './systemProfile.js';
 
 class NanoBananaServer {
   private server: Server;
@@ -85,6 +86,15 @@ class NanoBananaServer {
                 },
               },
               required: ['apiKey'],
+            },
+          },
+          {
+            name: 'get_system_profile',
+            description:
+              'Return a structured snapshot of the current machine, runtimes, workspace, installed MCP extensions, and installed skills',
+            inputSchema: {
+              type: 'object',
+              properties: {},
             },
           },
           {
@@ -499,6 +509,18 @@ class NanoBananaServer {
               ...(configResult.success ? {} : { error: configResult.message }),
             };
             break;
+          }
+
+          case 'get_system_profile': {
+            const profile = await SystemProfileCollector.collect();
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(profile, null, 2),
+                },
+              ],
+            };
           }
 
           case 'generate_image': {

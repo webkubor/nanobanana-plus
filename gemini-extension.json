@@ -1,6 +1,6 @@
 {
   "name": "nanobanana-plus",
-  "version": "1.2.0",
+  "version": "1.5.0",
   "description": "The first Gemini CLI extension with per-call Nano Banana 2 / Pro model switching + aspect ratio. No server restart needed.",
   "mcpServers": {
     "nanobanana-plus": {

@@ -7,7 +7,7 @@
 [English README](./README.en.md)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.12-brightgreen.svg)](gemini-extension.json)
+[![Version](https://img.shields.io/badge/version-1.5.0-brightgreen.svg)](gemini-extension.json)
 [![Stars](https://img.shields.io/github/stars/webkubor/nanobanana-plus?style=flat&color=yellow)](https://github.com/webkubor/nanobanana-plus/stargazers)
 [![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-Extension-4285F4?logo=google)](https://geminicli.com/extensions/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
@@ -91,6 +91,78 @@ codex mcp add nanobanana-plus -- nanobanana-plus
 ```
 
 > `nanobanana-extension` 是 npm 包名，`nanobanana-plus` 是实际启动 MCP Server 的可执行命令。Codex CLI 场景更推荐全局安装，不建议每次启动都走 `pnpm dlx` / `npx` 临时拉包。
+
+**方式四：HTTP API 模式（任何 AI 都能调用）**
+
+> 🆕 v1.5.0 新增 — 不依赖 MCP，任何能发 HTTP 请求的 AI / 脚本 / 应用都可以调用。
+
+```bash
+# 启动 HTTP API 服务
+nanobanana-plus api --port 3456
+
+# 或指定输出目录
+nanobanana-plus api --port 3456 --output ~/Desktop/nanobanana-plus/output
+```
+
+启动后，`curl` 或任何 HTTP 客户端即可生图：
+
+```bash
+# 生成图片（返回 base64 + 文件路径）
+curl -X POST http://localhost:3456/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "cyberpunk city at night, neon lights, rain",
+    "model": "gemini-3.1-flash-image-preview",
+    "aspectRatio": "16:9",
+    "format": "both"
+  }'
+
+# 查看已生成图片列表
+curl http://localhost:3456/api/files
+
+# 下载指定图片
+curl -O http://localhost:3456/api/files/filename.png
+
+# 查看支持的模型
+curl http://localhost:3456/api/models
+
+# 健康检查
+curl http://localhost:3456/health
+```
+
+**API 端点一览：**
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/health` | GET | 健康检查 + 认证状态 |
+| `/api/models` | GET | 支持的模型列表 + 宽高比 |
+| `/api/generate` | POST | 文字生图 |
+| `/api/edit` | POST | 编辑图片（需传原图路径） |
+| `/api/restore` | POST | 修复/增强图片 |
+| `/api/files` | GET | 列出所有已生成图片 |
+| `/api/files/:filename` | GET | 下载/预览指定图片 |
+| `/api/docs` | GET | Swagger UI（交互式 API 文档） |
+| `/api/openapi.json` | GET | OpenAPI 3.0 规范 |
+
+**`/api/generate` 请求参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `prompt` | string | ✅ | 图片描述 |
+| `model` | string | ❌ | 模型 ID，默认 Nano Banana 2 |
+| `aspectRatio` | string | ❌ | 宽高比：`16:9` / `9:16` / `1:1` / `21:9` 等 |
+| `outputCount` | int | ❌ | 出图数量 1-4，默认 1 |
+| `customFileName` | string | ❌ | 自定义文件名 |
+| `format` | string | ❌ | 返回格式：`base64` / `file` / `both`（默认） |
+| `fileFormat` | string | ❌ | 图片格式：`png`（默认）/ `jpeg` |
+| `seed` | int | ❌ | 随机种子 |
+
+**`format` 三种模式：**
+- `base64` — 仅返回 base64 编码图片
+- `file` — 仅返回文件路径和下载 URL
+- `both` — 同时返回 base64 + 文件路径
+
+> 💡 **适用场景**：任何 AI 助手、自动化脚本、Web 应用都可以通过 HTTP 调用，无需绑定 Gemini CLI / Codex。
 
 ---
 
@@ -279,6 +351,7 @@ export GOOGLE_API_KEY="your_key"               # 备选
 
 | 工具 | 说明 |
 |------|------|
+| `get_system_profile` | 返回本机硬件、运行时版本、MCP 配置、skills 安装概览 |
 | `generate_image` | 文字生图，支持多风格/多变体/**模型切换/宽高比** |
 | `edit_image` | 基于文字编辑已有图片 |
 | `restore_image` | 修复/增强老照片 |
@@ -287,11 +360,35 @@ export GOOGLE_API_KEY="your_key"               # 备选
 | `generate_story` | 生成连贯故事分镜图序列 |
 | `generate_diagram` | 生成流程图/架构图 |
 
+### `get_system_profile` 返回内容
+
+- 硬件：芯片、机型、CPU 核心数、总内存、系统版本
+- 运行时：`python3`、`pip3`、`node`、`npm`、`pnpm`、`uv`、`git`、`brew`
+- 包管理器摘要：`brew` formula/cask 数量、`pip3` 包数量与 `site-packages`
+- MCP 摘要：Gemini / Codex 两侧已配置 server 名称、来源、传输方式、命令或 URL、env key 名
+- Skills 摘要：Gemini / Codex / Agents 三侧已安装 skills 数量和名称
+
+> 安全说明：`get_system_profile` 只返回配置摘要，不会回传 API Key、token 等敏感值原文。
+
 ---
 
 ---
 
 ## 📝 更新日志 / Changelog
+
+### v1.5.0 (2026-03-18)
+
+- **🆕 HTTP API 模式**：新增 `nanobanana-plus api` 命令，启动 HTTP API 服务。任何 AI / 脚本 / Web 应用都可以通过 REST 接口调用生图，无需绑定 Gemini CLI 或 Codex。
+- **🆕 OpenAPI 文档**：自动生成 OpenAPI 3.0 规范 + Swagger UI（`/api/docs`），方便集成调试。
+- **框架升级**：HTTP 层基于 Hono（~14KB 轻量框架），零额外依赖。
+- **复用核心**：HTTP API 完全复用现有 `ImageGenerator` 类，无重复代码。
+
+### v1.4.0 (2026-03-10)
+
+- **新工具**：新增 `get_system_profile`，一次性返回硬件、运行时版本、包管理器摘要、MCP 配置和 skills 安装概览。
+- **模型兼容**：当请求 `imagen-4.0-ultra-generate-001` 或 `imagen-4.0-fast-generate-001` 且比例为 `21:9` 时，会自动切换到兼容的 Gemini 图像模型，并在结果里说明原因。
+- **输出目录**：默认输出路径改为项目内固定目录 `输出/banana-plus`，不再依赖启动时的工作目录。
+- **文档同步**：`README`、`README.en.md`、`GEMINI.md` 已同步记录新工具和行为变更。
 
 ### v1.0.12 (2026-03-06)
 

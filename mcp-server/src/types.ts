@@ -11,6 +11,12 @@ export type NanoBananaModel =
   | 'imagen-4.0-ultra-generate-001'    // Imagen 4 Ultra — predict 协议，Pro 专享
   | 'imagen-4.0-fast-generate-001';    // Imagen 4 Fast — predict 协议，Pro 专享
 
+export type PresetType =
+  | 'aureate-tech'    // CortexOS / Webkubor style
+  | 'isometric-3d'    // High-end 3D model
+  | 'glassmorphism'   // Frosted glass UI
+  | 'cyberpunk-vibe'; // Neon lights, rain, futuristic
+
 export interface ImageGenerationRequest {
   prompt: string;
   inputImage?: string;
@@ -18,6 +24,8 @@ export interface ImageGenerationRequest {
   mode: 'generate' | 'edit' | 'restore';
   // Model override (per-call)
   model?: NanoBananaModel;
+  // Style preset (predefined high-end aesthetics)
+  preset?: PresetType;
   // Aspect ratio (e.g. "16:9", "1:1", "4:3", "9:16")
   aspectRatio?: string;
   // Common presets that map to production-friendly banner ratios
@@ -48,11 +56,15 @@ export interface AuthConfig {
   source:
     | 'NANOBANANA_GEMINI_API_KEY'
     | 'NANOBANANA_GOOGLE_API_KEY'
+    | 'NANOBANANA_API_KEYS'  // 多 key 轮换
     | 'GEMINI_API_KEY'
     | 'GOOGLE_API_KEY'
     | 'oauth_adc'
     | 'runtime'
     | 'none';
+  // 多 key 轮换相关
+  apiKeys?: string[];  // 多个 key
+  currentKeyIndex?: number;  // 当前使用的 key 索引
 }
 
 export interface AuthStatus {

@@ -7,7 +7,7 @@
 [中文文档](./README.md)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.12-brightgreen.svg)](gemini-extension.json)
+[![Version](https://img.shields.io/badge/version-1.4.0-brightgreen.svg)](gemini-extension.json)
 [![Stars](https://img.shields.io/github/stars/webkubor/nanobanana-plus?style=flat&color=yellow)](https://github.com/webkubor/nanobanana-plus/stargazers)
 [![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-Extension-4285F4?logo=google)](https://geminicli.com/extensions/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
@@ -268,6 +268,7 @@ export GOOGLE_API_KEY=<your_key>
 
 | Tool | Description |
 |------|------|
+| `get_system_profile` | Return a structured snapshot of hardware, runtime versions, configured MCP servers, and installed skills |
 | `generate_image` | Text-to-image with styles/variations/model/aspect ratio |
 | `edit_image` | Edit an existing image with text prompt |
 | `restore_image` | Restore/enhance old image |
@@ -278,11 +279,28 @@ export GOOGLE_API_KEY=<your_key>
 | `check_auth_status` | Check if key is configured and ready |
 | `configure_api_key` | Input and validate API key at runtime for current session |
 
+### What `get_system_profile` returns
+
+- Hardware: chip, machine model, CPU cores, total memory, OS version
+- Runtimes: `python3`, `pip3`, `node`, `npm`, `pnpm`, `uv`, `git`, `brew`
+- Package manager summary: Homebrew formula/cask counts, `pip3` package count and `site-packages`
+- MCP summary: configured Gemini/Codex servers with source, transport, command or URL, and env key names
+- Skills summary: installed Gemini, Codex, and Agents skills
+
+> Security note: `get_system_profile` only returns safe summaries. It does not expose raw API keys or tokens.
+
 ---
 
 ---
 
 ## 📝 Changelog
+
+### v1.4.0 (2026-03-10)
+
+- Added `get_system_profile` to return hardware, runtime versions, package manager summaries, configured MCP servers, and installed skills in one call.
+- Added automatic model fallback for `21:9` requests when users choose `imagen-4.0-ultra-generate-001` or `imagen-4.0-fast-generate-001`, with the reason included in the response.
+- Changed the default output directory to the project-local `输出/banana-plus` path instead of relying on the launch working directory.
+- Synced `README`, `README.en.md`, and `GEMINI.md` so other agents can discover the new tool and behavior.
 
 ### v1.0.12 (2026-03-06)
 
