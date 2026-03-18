@@ -2,7 +2,7 @@
 
 # 🍌+ nanobanana-plus
 
-**首个支持 Nano Banana 2 / Pro 按次切换的 Gemini CLI 扩展**
+**一句话：AI 生图工具。支持 Gemini CLI、Codex CLI、HTTP API 三种调用方式。**
 
 [English README](./README.en.md)
 
@@ -48,133 +48,175 @@
 
 ---
 
-## ⚡ Quick Start
+## ⚡ 快速开始 / Quick Start
 
-**方式一：一键配置（推荐新用户）**
+nanobanana-plus 就是一个**帮你生成图片的工具**。你告诉它想要什么画面，它就给你生成一张图片，保存在你电脑上。
 
-```bash
-# 自动引导申请 API Key、回填、写入环境变量
-git clone https://github.com/webkubor/nanobanana-plus
-bash nanobanana-plus/setup.sh
-```
-
-脚本会帮你：① 检测已有 key → ② 引导去 [Google AI Studio](https://aistudio.google.com/apikey) 申请 → ③ 粘贴回填 → ④ 自动写入 `~/.zshrc`
+你**只需要选一个你平时用的 AI 工具**，然后跟着对应的步骤装就行。
 
 ---
 
-**方式二：手动配置**
+### 🧠 我用 Gemini CLI
+
+Gemini CLI 是 Google 出的命令行 AI 工具。如果你已经装了它，这是最简单的方式。
+
+**第一步：安装 nanobanana-plus**
 
 ```bash
-# 1. 安装扩展
 gemini extensions install https://github.com/webkubor/nanobanana-plus
+```
 
-# 2. 设置 API Key（在 https://aistudio.google.com/apikey 免费申请）
-export NANOBANANA_GEMINI_API_KEY="your_gemini_api_key"
-# 写入 ~/.zshrc 永久生效：
-echo 'export NANOBANANA_GEMINI_API_KEY="your_key"' >> ~/.zshrc
+**第二步：获取 API Key（免费）**
 
-# 3. 打开 Gemini CLI，直接对话生图
+1. 打开 https://aistudio.google.com/apikey
+2. 用 Google 账号登录
+3. 点「Create API Key」，复制生成的 Key
+
+**第三步：配置环境变量**
+
+把 Key 告诉系统，这样工具才能调用 Google 的图片生成服务：
+
+```bash
+# 临时生效（关掉终端就没了）
+export NANOBANANA_GEMINI_API_KEY="粘贴你的Key在这里"
+
+# 永久生效（推荐，执行一次就行）
+echo 'export NANOBANANA_GEMINI_API_KEY="粘贴你的Key在这里"' >> ~/.zshrc
+```
+
+> 💡 如果你已经用 `gemini` 命令登录过 Google，**可以跳过第二、三步**，扩展会自动用你的登录态。
+
+**第四步：开始生图**
+
+```bash
 gemini
 ```
 
-> 💡 **已用 Gemini CLI 登录过 Google 的用户无需配置 Key**，扩展会自动复用登录态。
+然后在对话里直接说人话就行：
 
-```
-# 在 Gemini CLI 中输入：
-生成一张赛博朋克夜市，用 pro 模型，16:9 比例
-```
+> 生成一张赛博朋克风格的夜市街道，16:9 比例，用 Pro 模型
 
-**方式三：安装到 Codex CLI**
-
-```bash
-# 推荐：先用 pnpm 全局安装，再把可执行命令注册给 Codex
-pnpm add -g nanobanana-extension
-codex mcp add nanobanana-plus -- nanobanana-plus
-```
-
-```bash
-# npm 兼容方式
-npm install -g nanobanana-extension
-codex mcp add nanobanana-plus -- nanobanana-plus
-```
-
-> `nanobanana-extension` 是 npm 包名，`nanobanana-plus` 是实际启动 MCP Server 的可执行命令。Codex CLI 场景更推荐全局安装，不建议每次启动都走 `pnpm dlx` / `npx` 临时拉包。
-
-**方式四：HTTP API 模式（任何 AI 都能调用）**
-
-> 🆕 v1.5.0 新增 — 不依赖 MCP，任何能发 HTTP 请求的 AI / 脚本 / 应用都可以调用。
-
-```bash
-# 启动 HTTP API 服务
-nanobanana-plus api --port 3456
-
-# 或指定输出目录
-nanobanana-plus api --port 3456 --output ~/Desktop/nanobanana-plus/output
-```
-
-启动后，`curl` 或任何 HTTP 客户端即可生图：
-
-```bash
-# 生成图片（返回 base64 + 文件路径）
-curl -X POST http://localhost:3456/api/generate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "cyberpunk city at night, neon lights, rain",
-    "model": "gemini-3.1-flash-image-preview",
-    "aspectRatio": "16:9",
-    "format": "both"
-  }'
-
-# 查看已生成图片列表
-curl http://localhost:3456/api/files
-
-# 下载指定图片
-curl -O http://localhost:3456/api/files/filename.png
-
-# 查看支持的模型
-curl http://localhost:3456/api/models
-
-# 健康检查
-curl http://localhost:3456/health
-```
-
-**API 端点一览：**
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/health` | GET | 健康检查 + 认证状态 |
-| `/api/models` | GET | 支持的模型列表 + 宽高比 |
-| `/api/generate` | POST | 文字生图 |
-| `/api/edit` | POST | 编辑图片（需传原图路径） |
-| `/api/restore` | POST | 修复/增强图片 |
-| `/api/files` | GET | 列出所有已生成图片 |
-| `/api/files/:filename` | GET | 下载/预览指定图片 |
-| `/api/docs` | GET | Swagger UI（交互式 API 文档） |
-| `/api/openapi.json` | GET | OpenAPI 3.0 规范 |
-
-**`/api/generate` 请求参数：**
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `prompt` | string | ✅ | 图片描述 |
-| `model` | string | ❌ | 模型 ID，默认 Nano Banana 2 |
-| `aspectRatio` | string | ❌ | 宽高比：`16:9` / `9:16` / `1:1` / `21:9` 等 |
-| `outputCount` | int | ❌ | 出图数量 1-4，默认 1 |
-| `customFileName` | string | ❌ | 自定义文件名 |
-| `format` | string | ❌ | 返回格式：`base64` / `file` / `both`（默认） |
-| `fileFormat` | string | ❌ | 图片格式：`png`（默认）/ `jpeg` |
-| `seed` | int | ❌ | 随机种子 |
-
-**`format` 三种模式：**
-- `base64` — 仅返回 base64 编码图片
-- `file` — 仅返回文件路径和下载 URL
-- `both` — 同时返回 base64 + 文件路径
-
-> 💡 **适用场景**：任何 AI 助手、自动化脚本、Web 应用都可以通过 HTTP 调用，无需绑定 Gemini CLI / Codex。
+就这么简单。AI 会自动调用 nanobanana-plus 生成图片，保存到你电脑上。
 
 ---
 
-## ✨ 相比 nanobanana 新增了什么 / What's New
+### 🔵 我用 Codex CLI
+
+Codex CLI 是 OpenAI 出的命令行 AI 工具。你需要先装好 [Codex CLI](https://github.com/openai/codex)。
+
+**第一步：全局安装**
+
+```bash
+# 用 pnpm 安装（推荐）
+pnpm add -g nanobanana-extension
+
+# 或者用 npm
+npm install -g nanobanana-extension
+```
+
+**第二步：注册到 Codex**
+
+告诉 Codex 有这个工具可以用：
+
+```bash
+codex mcp add nanobanana-plus -- nanobanana-plus
+```
+
+**第三步：配置 API Key**
+
+```bash
+# 把你的 Google API Key 设置进去（和上面 Gemini 同一个 Key）
+export NANOBANANA_GEMINI_API_KEY="粘贴你的Key在这里"
+echo 'export NANOBANANA_GEMINI_API_KEY="粘贴你的Key在这里"' >> ~/.zshrc
+```
+
+**第四步：开始生图**
+
+```bash
+codex
+```
+
+然后跟 AI 说：
+
+> 帮我生成一张中国水墨画风格的山水图，9:16 竖版，适合做手机壁纸
+
+---
+
+### 🌐 我用其他 AI / 想通过 HTTP 调用
+
+> 🆕 v1.5.0 新增 — 不需要装 Gemini CLI 或 Codex，只要能发 HTTP 请求就行。
+
+这种方式适合：你在开发 AI 应用、写自动化脚本、或者用了其他 AI 工具（比如 Claude、Cursor 等），想让它们也能调用这个生图服务。
+
+**第一步：启动 HTTP 服务**
+
+```bash
+nanobanana-plus api --port 3456
+```
+
+你会看到终端输出：
+
+```
+🚀 nanobanana-plus API running on http://localhost:3456
+📖 Swagger UI: http://localhost:3456/api/docs
+```
+
+> 💡 保持这个终端窗口别关，服务会一直跑。关掉就停了。
+
+**第二步：用任何方式调用**
+
+在另一个终端窗口里：
+
+```bash
+# 生成一张图
+curl -X POST http://localhost:3456/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "一只橘猫坐在雨天的窗台上", "aspectRatio": "16:9"}'
+
+# 看看你生成了哪些图片
+curl http://localhost:3456/api/files
+
+# 下载图片到本地
+curl -O http://localhost:3456/api/files/文件名.png
+
+# 查看 Swagger 文档（用浏览器打开）
+open http://localhost:3456/api/docs
+```
+
+如果其他 AI 工具支持调用 HTTP API（比如 Claude、自定义 GPT 等），把 `http://localhost:3456/api/generate` 这个地址告诉它就行。
+
+---
+
+### 📋 API 接口速查
+
+HTTP API 服务启动后，所有接口如下：
+
+| 接口 | 方法 | 干什么的 |
+|------|------|---------|
+| `/health` | GET | 检查服务是否正常 |
+| `/api/models` | GET | 查看支持哪些模型和比例 |
+| `/api/generate` | POST | 生成图片 ⭐ |
+| `/api/edit` | POST | 编辑已有图片 |
+| `/api/restore` | POST | 修复/增强老照片 |
+| `/api/files` | GET | 列出所有生成的图片 |
+| `/api/files/:name` | GET | 下载/预览某张图片 |
+| `/api/docs` | GET | Swagger 文档页面 |
+
+**生成图片的参数：**
+
+| 参数 | 是否必填 | 说明 |
+|------|---------|------|
+| `prompt` | ✅ 必填 | 描述你想要什么画面 |
+| `model` | 可选 | 用哪个模型生成（默认最快的 Nano Banana 2） |
+| `aspectRatio` | 可选 | 比例：`16:9` 横屏 / `9:16` 竖屏 / `1:1` 正方形 |
+| `outputCount` | 可选 | 一次出几张（1-4，默认 1） |
+| `format` | 可选 | 返回方式：`both` 同时给 base64+文件 / `file` 只给文件 / `base64` 只给编码 |
+
+---
+
+## ✨ 比原版多了什么
+
+> nanobanana 是 Google 官方的原版工具，nanobanana-plus 是在它基础上增强的版本。
 
 | 功能 | nanobanana | 🍌+ nanobanana-plus |
 |------|:---:|:---:|
@@ -190,9 +232,9 @@ curl http://localhost:3456/health
 
 ---
 
-## 🍌 模型切换 / Model Switching
+## 🍌 用哪个模型？
 
-无需重启服务，每次生图时单独指定模型：
+> 不同模型生成速度和质量不一样，按需选就行。**不需要重启服务**，每次生图时直接指定。
 
 | model 参数 | 对应模型 | 适合场景 |
 |-----------|---------|---------|
