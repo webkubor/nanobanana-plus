@@ -5,6 +5,7 @@
 
 ## 核心能力
 
+- `get_system_profile` — 一次性返回本机硬件、运行时版本、MCP 配置和已安装 skills 摘要
 - `generate_image` — 文本生图，支持动态选择模型和宽高比
 - `edit_image` — 基于文字编辑已有图片
 - `restore_image` — 图片修复增强
@@ -28,6 +29,9 @@
 ## 调用示例
 
 ```
+查看当前机器和 AI 环境摘要
+→ get_system_profile()
+
 生成一张 16:9 的科幻城市夜景，用 Pro 模型
 → generate_image(prompt="...", model="gemini-3-pro-image-preview", aspectRatio="16:9")
 

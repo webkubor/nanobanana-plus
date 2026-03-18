@@ -321,6 +321,22 @@ export class ImageGenerator {
   }
 
   static validateAuthentication(): AuthConfig {
+    // 支持多 key 轮换：NANOBANANA_API_KEYS="key1,key2,key3" 逗号分隔
+    const nanoMultiKeys = process.env.NANOBANANA_API_KEYS;
+    if (nanoMultiKeys) {
+      const keys = nanoMultiKeys.split(',').map(k => k.trim()).filter(k => k);
+      if (keys.length > 0) {
+        console.error(`✓ Found NANOBANANA_API_KEYS with ${keys.length} keys, will rotate`);
+        return {
+          apiKey: keys[0],  // 初始使用第一个
+          keyType: 'GEMINI_API_KEY',
+          source: 'NANOBANANA_API_KEYS',
+          apiKeys: keys,
+          currentKeyIndex: 0,
+        };
+      }
+    }
+
     const nanoGeminiKey = process.env.NANOBANANA_GEMINI_API_KEY;
     if (nanoGeminiKey) {
       console.error('✓ Found NANOBANANA_GEMINI_API_KEY environment variable');
@@ -456,6 +472,26 @@ export class ImageGenerator {
 
   private hasApiKey(): boolean {
     return this.authConfig.apiKey.trim().length > 0;
+  }
+
+  // 获取当前应该使用的 API key（多 key 轮换）
+  private getApiKey(): string {
+    if (this.authConfig.apiKeys && this.authConfig.apiKeys.length > 0) {
+      return this.authConfig.apiKeys[this.authConfig.currentKeyIndex || 0];
+    }
+    return this.authConfig.apiKey;
+  }
+
+  // 轮换到下一个 key
+  private rotateToNextKey(): void {
+    if (this.authConfig.apiKeys && this.authConfig.apiKeys.length > 1) {
+      const nextIndex = ((this.authConfig.currentKeyIndex || 0) + 1) % this.authConfig.apiKeys.length;
+      this.authConfig.currentKeyIndex = nextIndex;
+      const newKey = this.authConfig.apiKeys[nextIndex];
+      console.error(`🔄 Rotating to API key #${nextIndex + 1}/${this.authConfig.apiKeys.length}`);
+      // 重新创建 AI 实例
+      this.ai = new GoogleGenAI({ apiKey: newKey });
+    }
   }
 
   private getAuthModeLabel(): string {
@@ -844,6 +880,24 @@ export class ImageGenerator {
       };
     } catch (error: unknown) {
       console.error('DEBUG - Error in generateTextToImage:', error);
+      
+      // 检查是否是多 key 配置且遇到可重试的错误
+      const errorMessage = error instanceof Error ? error.message : String(error).toLowerCase();
+      const isRetryableError = 
+        errorMessage.includes('quota exceeded') ||
+        errorMessage.includes('429') ||
+        errorMessage.includes('rate limit') ||
+        errorMessage.includes('api key not valid') ||
+        errorMessage.includes('permission denied');
+      
+      // 如果是多 key 配置且遇到可重试错误，尝试轮换 key 重试
+      if (this.authConfig.apiKeys && this.authConfig.apiKeys.length > 1 && isRetryableError) {
+        console.error('⚠️ Detected retryable error, trying next API key...');
+        this.rotateToNextKey();
+        // 递归重试一次
+        return this.generateTextToImage(request);
+      }
+      
       return {
         success: false,
         message: 'Failed to generate image',

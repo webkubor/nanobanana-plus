@@ -6,6 +6,37 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 ---
 
+## [1.5.0] — 2026-03-18 🆕 HTTP API 模式 / HTTP API Mode
+
+### ✨ Added / 新增
+
+- **HTTP API Server (`nanobanana-plus api`)**: New `api` subcommand starts a Hono-based HTTP API server, allowing any AI, script, or web app to generate images via REST endpoints without Gemini CLI or Codex. / 新增 `api` 子命令，启动基于 Hono 的 HTTP API 服务。任何 AI、脚本或 Web 应用都可以通过 REST 接口调用生图，无需绑定 Gemini CLI 或 Codex。
+- **OpenAPI 3.0 + Swagger UI**: Auto-generated API documentation at `/api/docs` and `/api/openapi.json` for easy integration and debugging. / 自动生成 OpenAPI 3.0 规范和 Swagger UI，方便集成调试。
+
+### 🧠 Improved / 优化
+
+- **HTTP layer built on Hono** (~14KB lightweight framework), zero additional dependencies beyond what MCP SDK already provides. / HTTP 层基于 Hono（~14KB 轻量框架），零额外依赖。
+- **Full reuse of `ImageGenerator` class**: HTTP API uses the same core image generation logic as MCP, no code duplication. / 完全复用 `ImageGenerator` 类，无重复代码。
+
+---
+
+## [1.4.0] — 2026-03-10 🍌+ System Profile Tool & Smarter 21:9 Routing / 系统画像工具与更智能的 21:9 路由
+
+### ✨ Added / 新增
+
+- **`get_system_profile` MCP tool**: Added a structured system snapshot tool that returns machine hardware, runtime versions, package manager summaries, configured MCP servers, and installed skills in one call. / 新增 `get_system_profile` MCP 工具，一次性返回本机硬件、运行时版本、包管理器摘要、已配置 MCP Server 和已安装 skills。
+
+### 🧠 Improved / 优化
+
+- **Automatic 21:9 fallback for Imagen 4 / Imagen 4 的 21:9 自动回退**: Requests using `imagen-4.0-ultra-generate-001` or `imagen-4.0-fast-generate-001` with `21:9` now automatically switch to a compatible Gemini image model, and the response explains why the switch happened. / 当用户使用 `imagen-4.0-ultra-generate-001` 或 `imagen-4.0-fast-generate-001` 请求 `21:9` 时，系统会自动切换到兼容的 Gemini 图像模型，并在结果中说明切换原因。
+- **Stable project-local output path / 稳定的项目内输出目录**: Generated files now default to `输出/banana-plus` under the project root instead of depending on the shell working directory. / 生成文件默认输出到项目根目录下的 `输出/banana-plus`，不再依赖 shell 启动时的工作目录。
+
+### 📝 Documentation / 文档
+
+- Synced `README.md`, `README.en.md`, and `GEMINI.md` so human users and other agents can discover the new system-profile tool and updated generation behavior. / 同步更新 `README.md`、`README.en.md` 和 `GEMINI.md`，让用户和其他 agent 都能发现新的系统画像工具与生图行为更新。
+
+---
+
 ## [1.3.0] — 2026-03-06 🍌+ Packaging & Codex CLI Support / 打包支持与 Codex 集成
 
 ### 📦 Packaging / 打包
