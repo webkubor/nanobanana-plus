@@ -6,6 +6,7 @@ banana-plus/
 
 # Secrets and credentials
 .env*
+!.env.example
 *.key
 *.pem
 credentials.json

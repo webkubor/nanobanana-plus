@@ -33,10 +33,18 @@ async function main() {
   const outputDir = args.output
     ? path.resolve(args.output)
     : path.resolve(path.join(__dirname, '..', '..', 'output'));
+  const privateToken = process.env.NANOBANANA_PRIVATE_TOKEN?.trim();
+  const rateLimitMax = parseInt(process.env.NANOBANANA_RATE_LIMIT_MAX || '30', 10);
+  const rateLimitWindowMs = parseInt(
+    process.env.NANOBANANA_RATE_LIMIT_WINDOW_MS || '60000',
+    10,
+  );
 
   console.error('🍌 nanobanana-plus API server starting...');
   console.error(`   Port: ${port}`);
   console.error(`   Output: ${outputDir}`);
+  console.error(`   Private mode: ${privateToken ? 'enabled' : 'disabled'}`);
+  console.error(`   Rate limit: ${rateLimitMax}/${Math.round(rateLimitWindowMs / 1000)}s`);
   console.error('');
 
   let authConfig;
@@ -51,10 +59,17 @@ async function main() {
   }
 
   const imageGenerator = new ImageGenerator(authConfig);
-  await startApiServer(imageGenerator, { port, outputDir });
+  await startApiServer(imageGenerator, {
+    port,
+    outputDir,
+    privateToken,
+    rateLimitMax,
+    rateLimitWindowMs,
+  });
 
   console.error('');
   console.error('📡 Endpoints:');
+  console.error(`   GET  http://localhost:${port}/app`);
   console.error(`   GET  http://localhost:${port}/health`);
   console.error(`   GET  http://localhost:${port}/api/models`);
   console.error(`   POST http://localhost:${port}/api/generate`);
@@ -64,8 +79,16 @@ async function main() {
   console.error(`   GET  http://localhost:${port}/api/files/:filename`);
   console.error(`   GET  http://localhost:${port}/api/docs  ← Swagger UI`);
   console.error('');
+  if (privateToken) {
+    console.error(`🔐 Private Token: enabled via NANOBANANA_PRIVATE_TOKEN`);
+    console.error('   Open /app in the browser and paste the token once.');
+    console.error('');
+  }
   console.error('Example:');
   console.error(`   curl -X POST http://localhost:${port}/api/generate \\`);
+  if (privateToken) {
+    console.error(`     -H "Authorization: Bearer $NANOBANANA_PRIVATE_TOKEN" \\`);
+  }
   console.error(`     -H "Content-Type: application/json" \\`);
   console.error(`     -d '{"prompt": "cyberpunk city at night", "aspectRatio": "16:9"}'`);
   console.error('');

@@ -21,6 +21,12 @@ importers:
         specifier: ^4.12.8
         version: 4.12.8
     devDependencies:
+      '@eslint-community/eslint-utils':
+        specifier: 4.9.1
+        version: 4.9.1(eslint@9.39.3)
+      '@eslint/js':
+        specifier: 9.39.3
+        version: 9.39.3
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.15
@@ -36,6 +42,9 @@ importers:
       eslint-plugin-license-header:
         specifier: ^0.8.0
         version: 0.8.0
+      eslint-visitor-keys:
+        specifier: 3.4.3
+        version: 3.4.3
       globals:
         specifier: ^16.0.0
         version: 16.5.0

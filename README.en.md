@@ -2,15 +2,41 @@
 
 # 🍌+ nanobanana-plus
 
-**The first Gemini CLI extension with per-call Nano Banana 2 / Pro switching**
+**AI image generation toolkit for Gemini CLI, Codex CLI, HTTP API, and ClawHub**
 
 [中文文档](./README.md)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.0-brightgreen.svg)](gemini-extension.json)
+[![Core](https://img.shields.io/badge/core-1.5.0-brightgreen.svg)](gemini-extension.json)
+[![ClawHub Skill](https://img.shields.io/badge/ClawHub%20skill-1.5.2-F97316.svg)](https://clawhub.ai/webkubor/nanobanana-plus)
 [![Stars](https://img.shields.io/github/stars/webkubor/nanobanana-plus?style=flat&color=yellow)](https://github.com/webkubor/nanobanana-plus/stargazers)
 [![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-Extension-4285F4?logo=google)](https://geminicli.com/extensions/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![ClawHub](https://img.shields.io/badge/ClawHub-nanobanana--plus-F97316?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0zMS4xIDk3LjRjLTcuNiAwLTEzLjctNi4xLTEzLjctMTMuN1Y0NC4zYzAtNy42IDYuMS0xMy43IDEzLjctMTMuN2gxMi4zYzUuNSAwIDEwLjUgMy40IDEyLjQgOC41bDQuNyAxMi43YzEuNSA0IDUuMyA2LjYgOS42IDYuNmgyLjJjNC4zIDAgOC4xLTIuNyA5LjYtNi42bDQuNy0xMi43YzEuOS01LjEgNi45LTguNSAxMi40LTguNWgxMi4zYzcuNiAwIDEzLjcgNi4xIDEzLjcgMTMuN3YzOS40YzAgNy42LTYuMSAxMy43LTEzLjcgMTMuN0g4My43Yy01LjUgMC0xMC41LTMuNC0xMi40LTguNWwtNC43LTEyLjdjLTEuNS00LTUuMy02LjYtOS42LTYuNmgtMi4yYy00LjMgMC04LjEgMi43LTkuNiA2LjZsLTQuNyAxMi43Yy0xLjkgNS4xLTYuOSA4LjUtMTIuNCA4LjV6Ii8+PC9zdmc+)](https://clawhub.ai/webkubor/nanobanana-plus)
+
+<a href="https://clawhub.ai/webkubor/nanobanana-plus">
+  <img src="https://img.shields.io/badge/Available%20on-ClawHub-F97316?style=for-the-badge" alt="Available on ClawHub" />
+</a>
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <strong>Gemini CLI</strong><br/>
+      Native extension entry<br/>
+      <code>gemini extensions install ...</code>
+    </td>
+    <td align="center" width="33%">
+      <strong>Codex CLI</strong><br/>
+      MCP tool entry<br/>
+      <code>codex mcp add ...</code>
+    </td>
+    <td align="center" width="33%">
+      <strong>ClawHub</strong><br/>
+      Skill store listing<br/>
+      <a href="https://clawhub.ai/webkubor/nanobanana-plus">Open nanobanana-plus</a>
+    </td>
+  </tr>
+</table>
 
 </div>
 
@@ -97,6 +123,17 @@ codex mcp add nanobanana-plus -- nanobanana-plus
 ```
 
 > `nanobanana-extension` is the npm package name. `nanobanana-plus` is the executable that starts the MCP server for Codex CLI. For Codex, a global install is recommended over `pnpm dlx` / `npx` so the MCP server does not re-download on each launch.
+
+**Direct local CLI generation**
+
+```bash
+nanobanana-plus generate \
+  --prompt "A ginger cat sitting on a rainy windowsill" \
+  --filename ./output/cat.png \
+  --aspect-ratio 16:9
+```
+
+> This subcommand runs local generation directly and does not require starting the HTTP API server first.
 
 ---
 
