@@ -6,6 +6,16 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 ---
 
+## [1.5.3] — 2026-04-07 🍌+ OpenClaw Skill CLI Mode / OpenClaw Skill 改为直调 CLI
+
+### 🔄 Changed / 更改
+
+- **OpenClaw Skill 从 HTTP 改为直调 CLI**: 小龙虾/OpenClaw 用户现在无需启动 HTTP 服务，直接通过 spawn 调用 `nanobanana-plus generate` CLI 出图。/ OpenClaw skill now calls `nanobanana-plus` CLI directly via spawn instead of HTTP - no server startup required.
+- 移除 `--base-url` 和 `--token` 参数
+- 简化 skill 配置，不再依赖本地服务
+
+---
+
 ## [1.5.0] — 2026-03-18 🆕 HTTP API 模式 / HTTP API Mode
 
 ### ✨ Added / 新增
@@ -105,11 +115,11 @@ generate_image --prompt "..."
 
 Supported models:
 
-| `model` value | Name | Best for |
-|---|---|---|
-| `gemini-3.1-flash-image-preview` | Nano Banana 2 | ⚡ Default · Fast · Saves quota |
-| `gemini-3-pro-image-preview` | Nano Banana Pro | 🎨 High quality · Fine details |
-| `gemini-2.5-flash-image` | Nano Banana v1 | 🔄 Legacy compatibility |
+| `model` value                    | Name            | Best for                        |
+| -------------------------------- | --------------- | ------------------------------- |
+| `gemini-3.1-flash-image-preview` | Nano Banana 2   | ⚡ Default · Fast · Saves quota |
+| `gemini-3-pro-image-preview`     | Nano Banana Pro | 🎨 High quality · Fine details  |
+| `gemini-2.5-flash-image`         | Nano Banana v1  | 🔄 Legacy compatibility         |
 
 #### 📐 Aspect Ratio Control
 
