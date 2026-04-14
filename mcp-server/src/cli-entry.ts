@@ -17,11 +17,7 @@ Usage:
                      [--seed 123] [--preview | --no-preview]
 
 Commands:
-  generate    Generate one or more images locally without starting the HTTP API
-
-Notes:
-  - \`nanobanana-plus\` with no subcommand still starts the MCP server.
-  - \`nanobanana-plus api\` still starts the HTTP API server.
+  generate    Generate one or more images locally
 `);
 }
 

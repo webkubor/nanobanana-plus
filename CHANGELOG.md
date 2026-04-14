@@ -6,6 +6,27 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 ---
 
+## [2.0.0] - 2026-04-14
+
+### Breaking Changes
+- 移除 HTTP API server（`api` 子命令）
+- 移除 MCP server 支持
+
+### Why
+- CLI 足够满足所有使用场景
+- AI agent（Claude/Codex/Gemini）均可直接调用 shell，MCP 是冗余协议层
+- 去除 server 常驻依赖，零配置即用
+
+### Usage
+```bash
+nanobanana-plus generate \
+  --prompt "..." \
+  --aspect-ratio "16:9" \
+  --model "gemini-3.1-flash-image-preview"
+```
+
+---
+
 ## [1.5.3] — 2026-04-07 🍌+ OpenClaw Skill CLI Mode / OpenClaw Skill 改为直调 CLI
 
 ### 🔄 Changed / 更改

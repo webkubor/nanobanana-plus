@@ -2,19 +2,18 @@
   "name": "nanobanana-mcp-server",
   "version": "1.5.0",
   "type": "module",
-  "description": "MCP server for Nano Banana extension",
-  "main": "dist/index.js",
+  "description": "CLI for Nano Banana image generation",
+  "main": "dist/cli-entry.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/cli-entry.js",
     "dev": "tsc --watch",
     "prepare": "pnpm run build",
     "typecheck": "tsc --noEmit",
     "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
-    "@google/genai": "^1.17.0",
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@google/genai": "^1.17.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -4,16 +4,11 @@
 
 **一行 prompt，任意比例，多个模型，一张好图。**
 
-Gemini CLI 的 AI 生图扩展，现在支持 **Gemini CLI · Codex CLI · HTTP API · OpenClaw / 小龙虾** 四种调用方式。
-
 [English](./README.en.md) · [Changelog](./CHANGELOG.md) · [Report Bug](https://github.com/webkubor/nanobanana-plus/issues)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.5.0-brightgreen.svg)](gemini-extension.json)
+[![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](package.json)
 [![Stars](https://img.shields.io/github/stars/webkubor/nanobanana-plus?style=flat&color=yellow)](https://github.com/webkubor/nanobanana-plus/stargazers)
-[![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-Extension-4285F4?logo=google)](https://geminicli.com/extensions/)
-[![OpenClaw](https://img.shields.io/badge/OpenClaw%20%2F%20小龙虾-Skill-FF6B35)](https://clawhub.ai/webkubor/nanobanana-plus)
-[![npm](https://img.shields.io/npm/v/nanobanana-extension?color=CB3837)](https://www.npmjs.com/package/nanobanana-extension)
 
 </div>
 
@@ -50,63 +45,25 @@ nanobanana-plus 保留模型原生横版构图：
 
 ## 快速开始
 
-选一个你平时用的工具，跟着步骤走就行。
-
-### 🧠 Gemini CLI
+### 安装
 
 ```bash
-# 1. 安装
-gemini extensions install https://github.com/webkubor/nanobanana-plus
+# 全局安装
+pnpm add -g nanobanana-extension
+# 或
+npm install -g nanobanana-extension
+```
 
-# 2. 获取 API Key（免费）→ https://aistudio.google.com/apikey
+### 配置 API Key
 
-# 3. 配置
+```bash
 export NANOBANANA_GEMINI_API_KEY="你的Key"
 echo 'export NANOBANANA_GEMINI_API_KEY="你的Key"' >> ~/.zshrc
-
-# 4. 开用
-gemini
-# → 然后直接说人话："生成一张赛博朋克风格的夜市街道，16:9，Pro模型"
 ```
 
-> 💡 已经用 `gemini auth login` 登录过？跳过第 2、3 步，扩展会自动复用你的登录态。
+> 💡 已经用 `gemini auth login` 登录过？跳过这步，扩展会自动复用你的登录态。
 
-### 🔵 Codex CLI
-
-```bash
-# 1. 全局安装
-pnpm add -g nanobanana-extension   # 或 npm install -g nanobanana-extension
-
-# 2. 注册到 Codex
-codex mcp add nanobanana-plus -- nanobanana-plus
-
-# 3. 配置 Key（同上）
-export NANOBANANA_GEMINI_API_KEY="你的Key"
-
-# 4. 开用
-codex
-```
-
-### 🦞 OpenClaw / 小龙虾
-
-[![安装到 ClawHub](https://img.shields.io/badge/ClawHub-一键安装-FF6B35)](https://clawhub.ai/webkubor/nanobanana-plus)
-
-```bash
-# 方式一：ClawHub 一键安装（推荐）
-clawhub install webkubor/nanobanana-plus
-
-# 方式二：手动初始化
-nanobanana-plus init --base-url http://localhost:3456
-
-# 通过 OpenClaw skill 生成图片
-nanobanana-plus generate --prompt "一只橘猫坐在雨天窗台上" --filename cat.png --aspect-ratio 16:9
-```
-
-> OpenClaw skill 仍然需要先启动 HTTP API 服务（见下方），因为 skill 会通过 HTTP 调用本地服务生图。
-
-### 💻 本地 CLI 单次生成
-
-适用于终端里直接出图，不想先起端口的场景。
+### 生成图片
 
 ```bash
 nanobanana-plus generate \
@@ -115,63 +72,20 @@ nanobanana-plus generate \
   --aspect-ratio 16:9
 ```
 
-> 这个命令会直接进入本地生成逻辑，不经过 `/api/generate`。
+---
 
-### 🌐 HTTP API（通用）
-
-适用于 Claude、Cursor、自定义 GPT、Web 应用——任何能发 HTTP 请求的场景。
-
-```bash
-# 1. 启动服务
-nanobanana-plus api --port 3456
-
-# 2. 调用（另一个终端）
-curl -X POST http://localhost:3456/api/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "一只橘猫坐在雨天的窗台上", "aspectRatio": "16:9"}'
-
-# 浏览器打开 Swagger 文档
-open http://localhost:3456/api/docs
-```
-
-**API 接口一览：**
-
-| 接口 | 方法 | 说明 |
-|------|------|------|
-| `/health` | GET | 健康检查 |
-| `/api/models` | GET | 可用模型列表 |
-| `/api/generate` | POST | ⭐ 生成图片 |
-| `/api/edit` | POST | 编辑已有图片 |
-| `/api/restore` | POST | 修复/增强老照片 |
-| `/api/files` | GET | 列出生成的图片 |
-| `/api/docs` | GET | Swagger 文档 |
-
-<details>
-<summary><b>生成参数详解</b></summary>
+## 命令参数
 
 | 参数 | 必填 | 说明 |
 |------|:----:|------|
-| `prompt` | ✅ | 描述你想要什么画面 |
-| `model` | — | 模型（默认 Nano Banana 2） |
-| `aspectRatio` | — | 比例：`16:9` / `9:16` / `1:1` / `4:3` / `3:4` |
-| `outputCount` | — | 一次出几张（1-4，默认 1） |
-| `format` | — | `both`（默认）/ `file` / `base64` |
-
-</details>
-
----
-
-## 比原版多了什么
-
-| 功能 | nanobanana | 🍌 nanobanana-plus |
-|------|:---:|:---:|
-| 文字生图 | ✅ | ✅ |
-| 图片编辑 / 修复 | ✅ | ✅ |
-| 图标 · 图案 · 分镜 · 流程图 | ✅ | ✅ |
-| **按次切换模型** | ❌ 需重启 | ✅ 每次调用独立指定 |
-| **任意宽高比** | ❌ 只有 1:1 | ✅ 16:9 / 9:16 / 1:1 / 4:3 / 3:4 |
-| **HTTP API** | ❌ | ✅ 任何工具都能调 |
-| **OpenClaw / 小龙虾** | ❌ | ✅ ClawHub 一键安装 |
+| `--prompt` | ✅ | 描述你想要什么画面 |
+| `--model` | — | 模型（默认 Nano Banana 2） |
+| `--aspect-ratio` | — | 比例：`16:9` / `9:16` / `1:1` / `4:3` / `3:4` |
+| `--output-count` | — | 一次出几张（1–8，默认 1） |
+| `--filename` | — | 输出文件路径 |
+| `--file-format` | — | `png`（默认）或 `jpeg` |
+| `--seed` | — | 固定随机种子 |
+| `--preview` / `--no-preview` | — | 控制是否预览 |
 
 ---
 
@@ -194,34 +108,6 @@ open http://localhost:3456/api/docs
 
 ---
 
-## 效果图库
-
-### 💎 Imagen 4 Ultra — 顶级写实
-
-```bash
-generate_image(prompt="majestic snowy mountain peak under a starry night sky, photorealistic, 8K",
-  model="imagen-4.0-ultra-generate-001", aspectRatio="16:9")
-```
-![Ultra 16:9](https://files.catbox.moe/a7sfh2.png)
-
-### 🚀 Imagen 4 Fast — 速度与质量
-
-```bash
-generate_image(prompt="a tranquil Japanese zen garden at dusk, soft mist, lanterns",
-  model="imagen-4.0-fast-generate-001", aspectRatio="9:16")
-```
-![Fast 9:16](https://files.catbox.moe/8tz6ny.png)
-
-### ⚡ Nano Banana 2 — 极速日常（默认）
-
-```bash
-generate_image(prompt="cyberpunk city at night, neon lights, rain reflections, cinematic",
-  model="gemini-3.1-flash-image-preview", aspectRatio="16:9")
-```
-![Nano Banana 16:9](https://files.catbox.moe/kl23ih.png)
-
----
-
 ## 宽高比速查
 
 | 比例 | 典型用途 |
@@ -232,22 +118,25 @@ generate_image(prompt="cyberpunk city at night, neon lights, rain reflections, c
 | `4:3` | 🖼️ 传统横版 / PPT 配图 |
 | `3:4` | 📄 传统竖版 / 海报 |
 
-> 💡 **Prompt 小技巧**：传了 `aspectRatio` 就别在 prompt 里重复写比例数字，让参数管比例，prompt 专注画面描述。
-
 ---
 
-## 全部工具
+## 效果图库
 
-| 工具 | 说明 |
-|------|------|
-| `generate_image` | 文字生图，支持模型切换 + 宽高比 |
-| `edit_image` | 基于文字编辑已有图片 |
-| `restore_image` | 修复/增强老照片 |
-| `generate_icon` | App 图标（多尺寸） |
-| `generate_pattern` | 无缝平铺图案 |
-| `generate_story` | 连贯故事分镜 |
-| `generate_diagram` | 流程图/架构图 |
-| `get_system_profile` | 返回硬件、运行时、MCP 配置概览 |
+### 💎 Imagen 4 Ultra — 顶级写实
+
+```bash
+nanobanana-plus generate --prompt "majestic snowy mountain peak under a starry night sky, photorealistic, 8K" \
+  --model imagen-4.0-ultra-generate-001 --aspect-ratio 16:9
+```
+![Ultra 16:9](https://files.catbox.moe/a7sfh2.png)
+
+### ⚡ Nano Banana 2 — 极速日常（默认）
+
+```bash
+nanobanana-plus generate --prompt "cyberpunk city at night, neon lights, rain reflections, cinematic" \
+  --model gemini-3.1-flash-image-preview --aspect-ratio 16:9
+```
+![Nano Banana 16:9](https://files.catbox.moe/kl23ih.png)
 
 ---
 

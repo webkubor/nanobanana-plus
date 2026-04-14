@@ -5,7 +5,6 @@
   "description": "Gemini CLI extension for Nano Banana models",
   "packageManager": "pnpm@10.25.0",
   "bin": {
-    "nanobanana-extension": "./bin/nanobanana-plus.js",
     "nanobanana-plus": "./bin/nanobanana-plus.js"
   },
   "files": [
@@ -15,7 +14,6 @@
     "LICENSE",
     "README.md",
     "README.en.md",
-    "gemini-extension.json",
     "mcp-server/dist",
     "mcp-server/package.json",
     "setup.sh"
@@ -37,10 +35,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@google/genai": "^1.17.0",
-    "@hono/node-server": "^1.19.11",
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "hono": "^4.12.8"
+    "@google/genai": "^1.17.0"
   },
   "devDependencies": {
     "@eslint-community/eslint-utils": "4.9.1",
