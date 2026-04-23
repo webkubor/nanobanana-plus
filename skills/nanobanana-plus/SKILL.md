@@ -1,7 +1,7 @@
 ---
 name: nanobanana-plus
 description: "Use nanobanana-plus CLI to generate images with per-call model switching and aspect ratio control. Direct CLI invocation - no server required. Supports: node nanobanana-plus.mjs generate --prompt 'desc' --filename 'out.png' [--aspect-ratio 16:9] [--model gemini-3.1-flash-image-preview]. Also supports check and models."
-version: 1.5.3
+version: 1.5.4
 license: Apache-2.0
 homepage: https://github.com/webkubor/nanobanana-plus
 store: https://clawhub.ai/webkubor/nanobanana-plus
