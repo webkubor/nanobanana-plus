@@ -11,7 +11,7 @@ export type GeminiImageModel =
   | 'imagen-4.0-ultra-generate-001'    // Imagen 4 Ultra — predict 协议，Pro 专享
   | 'imagen-4.0-fast-generate-001';    // Imagen 4 Fast — predict 协议，Pro 专享
 
-export type ImageProvider = 'gemini' | 'openai';
+export type ImageProvider = 'codex' | 'gemini' | 'openai';
 
 export type PresetType =
   | 'aureate-tech'    // CortexOS / Webkubor style
@@ -42,6 +42,10 @@ export interface ImageGenerationRequest {
   seed?: number;
   // Custom export filename
   customFileName?: string;
+  // Active profile name (applied before expansion)
+  profileName?: string;
+  // Skip prompt expansion even when a profile is active
+  noExpand?: boolean;
   // Preview options
   preview?: boolean;
   noPreview?: boolean;

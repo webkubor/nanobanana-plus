@@ -2,125 +2,183 @@
 
 # image-agent-plus
 
-**Local-first image workflow for Codex CLI, Gemini CLI, OpenClaw, and Hermes.**
+**One sentence → great image. No API key needed.**
 
-[Changelog](./CHANGELOG.md) · [Report Bug](https://github.com/webkubor/image-agent-plus/issues)
+Smart AI image generator powered by Codex CLI or Gemini CLI —  
+auto prompt expansion, reusable profiles, zero configuration.
 
+[Changelog](./CHANGELOG.md) · [Report Bug](https://github.com/webkubor/image-agent-plus/issues) · [npm](https://www.npmjs.com/package/image-agent-plus)
+
+[![npm version](https://img.shields.io/npm/v/image-agent-plus?color=blue)](https://www.npmjs.com/package/image-agent-plus)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](package.json)
 [![Stars](https://img.shields.io/github/stars/webkubor/image-agent-plus?style=flat&color=yellow)](https://github.com/webkubor/image-agent-plus/stargazers)
 
 </div>
 
 ---
 
-`image-agent-plus` is no longer a Nano Banana-only wrapper. It is a local image-agent toolkit that prefers installed CLI runtimes first:
-
-- Codex CLI users do not need to provide an API key.
-- Gemini CLI users do not need to provide an API key.
-- OpenClaw and Hermes are detected as agent runtimes.
-- API keys are only for direct provider API mode, or for machines without Codex/Gemini local runtime.
-
-The project still supports Gemini/Nano Banana-compatible model IDs and OpenAI image models as direct provider backends.
+![AI 时代，我们应该沉淀下来的是什么](https://raw.githubusercontent.com/webkubor/image-agent-plus/main/skills/image-agent-plus/assets/ai-era-editorial-poster.png)
 
 ---
 
-## Install
+## What it does
 
 ```bash
 npm install -g image-agent-plus
+image-agent-plus generate --prompt "a tabby cat on a rainy windowsill"
 ```
 
-## Runtime Check
+That's it. No API key. No config. Just install [Codex CLI](https://github.com/openai/codex), and you're generating.
+
+**Key features:**
+
+- 🚫 **No API key required** — uses your local Codex CLI login
+- 🧠 **Smart prompt expansion** — short prompts auto-enriched from your profile
+- 🎯 **Reusable profiles** — set once, generate forever (social / blog / wallpaper / poster …)
+- 🤖 **Agent-native** — skills for Codex, OpenClaw, and Hermes included
+- 🔀 **Multi-provider** — Codex · Gemini · OpenAI, switchable per call
+
+---
+
+## Quick start
 
 ```bash
-image-agent-plus check
-# codex and gemini are installed. Default runtime: codex.
-# Agent runtimes: openclaw, hermes.
+# 1. Install Codex CLI (one-time setup, no API key needed)
+npm install -g @openai/codex
+codex login
+
+# 2. Install image-agent-plus
+npm install -g image-agent-plus
+
+# 3. Generate
+image-agent-plus generate --prompt "neon Tokyo street at night, rain"
 ```
 
-Runtime selection:
+---
 
-| Local CLI state | Default runtime |
-|-----------------|-----------------|
-| `codex` and `gemini` installed | `codex` |
-| only `codex` installed | `codex` |
-| only `gemini` installed | `gemini` |
-| `openclaw` installed | exposed as agent runtime |
-| `hermes` installed | exposed as agent runtime |
-| neither `codex` nor `gemini` installed | fail with explicit install/API-mode guidance |
+## Profiles — set once, skip forever
 
-`generate` runs the same runtime check before image generation.
+Profiles save your default platform, aspect ratio, and style so you never repeat yourself.
+
+```bash
+# See all profiles (* = active default)
+image-agent-plus profile list
+
+# Switch default
+image-agent-plus profile use story      # 9:16  stories/reels
+image-agent-plus profile use social     # 3:4   instagram / 小红书
+image-agent-plus profile use blog       # 16:9  web blog
+image-agent-plus profile use wallpaper  # 16:9  desktop
+image-agent-plus profile use avatar     # 1:1   profile photo
+
+# Create your own
+image-agent-plus profile set \
+  --name youtube \
+  --platform youtube-thumbnail \
+  --aspect-ratio 16:9 \
+  --style "bold colorful"
+```
+
+Built-in profiles:
+
+| Name        | Platform              | Ratio | Style                |
+|-------------|-----------------------|-------|----------------------|
+| `social`    | instagram/xiaohongshu | 3:4   | photorealistic       |
+| `story`     | stories/reels         | 9:16  | photorealistic       |
+| `blog`      | web-blog              | 16:9  | modern illustration  |
+| `hero`      | web-hero              | 21:9  | cinematic            |
+| `wallpaper` | desktop-wallpaper     | 16:9  | artistic             |
+| `avatar`    | profile-photo         | 1:1   | photorealistic       |
+| `poster`    | print-poster          | 3:4   | editorial            |
+
+Profiles saved to `~/.image-agent-plus/profiles.json`.
+
+---
+
+## Smart prompt expansion
+
+Short prompts are automatically enriched when a profile is active:
+
+```
+Input:   "一只橘猫"
+Profile: social (3:4, photorealistic, instagram/xiaohongshu)
+
+Output:  "一只橘猫, portrait composition, subject in upper-center,
+          lifestyle aesthetic, warm tones, soft bokeh, shareable,
+          photorealistic, high detail, professional quality, sharp focus,
+          subject sharp and detailed, soft ambient light, minimal noise"
+```
+
+Pass `--no-expand` to use the raw prompt as-is.
 
 ---
 
 ## Generate
 
 ```bash
-image-agent-plus generate \
-  --prompt "a tabby cat sitting on a rainy windowsill, cinematic lighting" \
-  --provider gemini \
-  --aspect-ratio 16:9
+# Uses active profile — aspect ratio, style, provider auto-applied
+image-agent-plus generate --prompt "cherry blossoms at dusk"
+
+# Override aspect ratio for this call
+image-agent-plus generate --prompt "wide city skyline" --aspect-ratio 16:9
+
+# Use a specific profile for this call
+image-agent-plus generate --prompt "product shot" --profile avatar
+
+# Multiple images
+image-agent-plus generate --prompt "abstract art" --output-count 4
 ```
 
-## Providers and Models
+---
 
-No server restart is needed. Provider/model can be selected per call.
-
-| `--provider` | Backend | Default auth path |
-|--------------|---------|-------------------|
-| `gemini` *(default)* | Gemini / Nano Banana-compatible / Imagen models | Gemini CLI OAuth/ADC or optional API key |
-| `openai` | OpenAI GPT Image models | Codex CLI for agent workflow, optional API key for direct HTTP API mode |
-
-| `--model` | Name | Best for |
-|-----------|------|----------|
-| *(default)* | `gemini-3.1-flash-image-preview` | Fast daily generation |
-| `gemini-3-pro-image-preview` | Gemini Pro image | Higher detail |
-| `gemini-2.5-flash-image` | Gemini legacy image | Compatibility |
-| `imagen-4.0-ultra-generate-001` | Imagen 4 Ultra | Photorealistic direct API mode |
-| `imagen-4.0-fast-generate-001` | Imagen 4 Fast | Fast direct API mode |
-| `gpt-image-1.5` | OpenAI GPT Image | Text rendering and instruction following |
-| `gpt-image-1` | OpenAI GPT Image 1 | Stable OpenAI image generation |
-
-Optional direct API env vars:
+## Runtime check
 
 ```bash
-export IMAGE_AGENT_MODEL=gemini-3-pro-image-preview
-export IMAGE_AGENT_PROVIDER=openai
-export IMAGE_AGENT_OPENAI_MODEL=gpt-image-1.5
-export IMAGE_AGENT_GEMINI_API_KEY="your_key"      # optional direct Gemini API mode
-export IMAGE_AGENT_OPENAI_API_KEY="your_key"      # optional direct OpenAI API mode
+image-agent-plus check
 ```
 
-Legacy `NANOBANANA_*` env vars are still read as fallbacks, but new installs should use `IMAGE_AGENT_*`.
+| State | Default provider |
+|-------|-----------------|
+| Codex CLI installed | `codex` — no API key ever needed |
+| Only Gemini CLI | `gemini` — needs `GEMINI_API_KEY` for image output |
+| Neither installed | guided install message |
+
+Override per call: `--provider codex|gemini|openai`
+
+Optional env vars for direct API mode:
+
+```bash
+export IMAGE_AGENT_GEMINI_API_KEY="your_key"
+export IMAGE_AGENT_OPENAI_API_KEY="your_key"
+```
 
 ---
 
-## Agent Skills
+## Agent skills
 
-This package includes agent-facing skills for Codex, OpenClaw, and Hermes:
+| Skill | What it does |
+|-------|-------------|
+| [`image-prompt-refiner`](./skills/image-prompt-refiner/SKILL.md) | Checks profile, asks only missing questions, expands prompt |
+| [`reference-style-transfer`](./skills/reference-style-transfer/SKILL.md) | Extracts style from a reference image and builds a transfer prompt |
+| [`image-agent-plus`](./skills/image-agent-plus/SKILL.md) | Direct CLI invocation skill |
 
-| Skill | Purpose |
-|-------|---------|
-| `skills/image-prompt-refiner/SKILL.md` | Optimizes a short image request into a production prompt and asks targeted questions when key constraints are missing, especially size/aspect ratio. |
-| `skills/reference-style-transfer/SKILL.md` | Converts a reference image into a style-transfer brief for generating a new image with the same visual language. |
-| `skills/image-agent-plus/SKILL.md` | Calls the local `image-agent-plus` CLI. |
+Agent commands (`.toml`): `smart` · `profile` · `generate` · `image-agent`
 
 ---
 
-## Options
+## CLI reference
 
-| Flag | Required | Description |
-|------|:--------:|-------------|
-| `--prompt` | yes | Describe the image |
-| `--provider` | no | `gemini` or `openai` |
-| `--model` | no | Provider model ID |
-| `--aspect-ratio` | no | `16:9`, `9:16`, `1:1`, `4:3`, `3:4`, `21:9` |
-| `--output-count` | no | 1-8 images per call |
-| `--filename` | no | Output file path |
-| `--file-format` | no | `png` or `jpeg` |
-| `--seed` | no | Fix random seed for reproducibility |
-| `--preview` / `--no-preview` | no | Toggle preview |
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--prompt` | required | Image description |
+| `--profile` | active default | Profile to apply |
+| `--no-expand` | false | Skip prompt expansion |
+| `--aspect-ratio` | from profile | `16:9` `9:16` `1:1` `3:4` `21:9` |
+| `--provider` | auto | `codex` `gemini` `openai` |
+| `--output-count` | 1 | 1–8 images |
+| `--filename` | `~/Desktop/image-agent-plus-output/` | Output path |
+| `--seed` | — | Fix seed for reproducibility |
+| `--preview` / `--no-preview` | — | Open after generation |
 
 ---
 
@@ -129,9 +187,11 @@ This package includes agent-facing skills for Codex, OpenClaw, and Hermes:
 ```bash
 git clone https://github.com/webkubor/image-agent-plus
 cd image-agent-plus
-pnpm install
-pnpm run build
+pnpm install && pnpm run build
+node bin/image-agent-plus.js check
 ```
+
+---
 
 ## License
 

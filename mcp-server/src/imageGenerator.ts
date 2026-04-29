@@ -1,5 +1,7 @@
 
 import { GoogleGenAI } from '@google/genai';
+import * as fs from 'fs';
+import * as path from 'path';
 import { FileHandler } from './fileHandler.js';
 import { checkLocalRuntime } from './localRuntime.js';
 import {
@@ -10,7 +12,7 @@ import {
   AuthStatus,
   StorySequenceArgs,
 } from './types.js';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
@@ -23,7 +25,8 @@ export class ImageGenerator {
   private authValidated = false;
   private authValidationError: string | null = null;
   private static readonly DEFAULT_MODEL = 'gemini-3.1-flash-image-preview';
-  private static readonly DEFAULT_OPENAI_MODEL = 'gpt-image-1.5';
+  private static readonly DEFAULT_OPENAI_MODEL = 'gpt-image-2';
+  private static readonly DEFAULT_CODEX_IMAGE_MODEL_LABEL = 'codex-default-image2';
   private static readonly MODEL_LIST_ENDPOINT =
     'https://generativelanguage.googleapis.com/v1beta/models';
   private static readonly ASPECT_RATIO_PRESETS = {
@@ -65,15 +68,137 @@ export class ImageGenerator {
   // 解析每次请求实际使用的模型（per-call override 优先）
   private resolveModel(request: ImageGenerationRequest): string {
     const provider = this.resolveProvider(request);
-    const model = request.model ||
-      (provider === 'openai'
-        ? process.env.IMAGE_AGENT_OPENAI_MODEL ||
-          process.env.NANOBANANA_OPENAI_MODEL ||
-          process.env.OPENAI_IMAGE_MODEL ||
-          ImageGenerator.DEFAULT_OPENAI_MODEL
-        : this.modelName);
+    const model =
+      request.model ||
+      (provider === 'codex'
+        ? process.env.IMAGE_AGENT_CODEX_MODEL ||
+          process.env.CODEX_IMAGE_MODEL ||
+          ImageGenerator.DEFAULT_CODEX_IMAGE_MODEL_LABEL
+        : provider === 'openai'
+          ? process.env.IMAGE_AGENT_OPENAI_MODEL ||
+            process.env.NANOBANANA_OPENAI_MODEL ||
+            process.env.OPENAI_IMAGE_MODEL ||
+            ImageGenerator.DEFAULT_OPENAI_MODEL
+          : this.modelName);
     console.error(`DEBUG - Resolved model for this call: ${model}`);
     return model;
+  }
+
+  private async listCodexImageFiles(dir: string): Promise<string[]> {
+    try {
+      await fs.promises.access(dir);
+    } catch {
+      return [];
+    }
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    const results: string[] = [];
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        results.push(...(await this.listCodexImageFiles(fullPath)));
+      } else if (/\.(png|jpe?g|webp)$/i.test(entry.name)) {
+        results.push(fullPath);
+      }
+    }
+    return results;
+  }
+
+  private async getMostRecentFile(files: string[]): Promise<string> {
+    const withStats = await Promise.all(
+      files.map(async (f) => ({ file: f, mtime: (await fs.promises.stat(f)).mtimeMs })),
+    );
+    withStats.sort((a, b) => b.mtime - a.mtime);
+    return withStats[0].file;
+  }
+
+  private async generateViaCodexRuntime(
+    prompt: string,
+    outputPath: string,
+    request: ImageGenerationRequest,
+    _model: string,
+    index: number,
+    aspectRatio?: string,
+  ): Promise<string> {
+    const codexPath = ImageGenerator.localRuntimeStatus?.codexPath;
+    if (!codexPath) {
+      throw new Error('Codex CLI path not found. Run `image-agent-plus check` to verify runtime.');
+    }
+
+    const codexImagesDir = path.join(
+      process.env.CODEX_HOME || path.join(process.env.HOME || '', '.codex'),
+      'generated_images',
+    );
+
+    const existingFiles = new Set(await this.listCodexImageFiles(codexImagesDir));
+
+    const fullPrompt = [
+      'Generate an image:',
+      prompt,
+      ...(aspectRatio ? [`Use aspect ratio ${aspectRatio}.`] : []),
+    ].join(' ');
+
+    console.error(`DEBUG - Running: codex exec --full-auto "${fullPrompt.slice(0, 80)}..."`);
+
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn(
+        codexPath,
+        ['exec', '--full-auto', '--skip-git-repo-check', fullPrompt],
+        { stdio: ['ignore', 'pipe', 'pipe'] },
+      );
+
+      let stderr = '';
+      child.stderr?.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
+
+      const timer = setTimeout(() => {
+        child.kill();
+        reject(new Error(`codex exec timed out after 120s. stderr: ${stderr.slice(-300)}`));
+      }, 120_000);
+
+      child.on('exit', (code) => {
+        clearTimeout(timer);
+        if (code !== 0 && code !== null) {
+          reject(new Error(`codex exec exited with code ${code}: ${stderr.slice(-300)}`));
+        } else {
+          resolve();
+        }
+      });
+
+      child.on('error', (err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+    });
+
+    // Give the file system a moment to flush
+    await new Promise((r) => setTimeout(r, 500));
+
+    const newFiles = (await this.listCodexImageFiles(codexImagesDir)).filter(
+      (f) => !existingFiles.has(f),
+    );
+
+    if (!newFiles.length) {
+      throw new Error(
+        'Codex exec completed but no new image was found in ~/.codex/generated_images/. ' +
+        'Make sure Codex has image generation capability and the model supports image output.',
+      );
+    }
+
+    const newFile = newFiles.length === 1 ? newFiles[0] : await this.getMostRecentFile(newFiles);
+    const rawExt = path.extname(newFile).slice(1).toLowerCase();
+    const fileFormat: 'png' | 'jpeg' = rawExt === 'jpg' || rawExt === 'jpeg' ? 'jpeg' : 'png';
+    const filename = FileHandler.generateFilename(
+      request.styles || request.variations ? prompt : request.prompt,
+      'codex',
+      fileFormat,
+      index,
+      aspectRatio || '1:1',
+      request.customFileName,
+    );
+    const fullPath = path.join(outputPath, filename);
+    await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
+    await fs.promises.copyFile(newFile, fullPath);
+    console.error(`DEBUG - Codex image collected: ${newFile} → ${fullPath}`);
+    return fullPath;
   }
 
   private resolveAspectRatio(
@@ -126,6 +251,10 @@ export class ImageGenerator {
   }
 
   private getModelLabel(model: string): string {
+    if (model === 'gpt-image-2' || model === 'chatgpt-image-2') {
+      return 'ChatGPT Image 2';
+    }
+
     if (model.startsWith('gpt-image') || model === 'chatgpt-image-latest') {
       return `OpenAI ${model}`;
     }
@@ -421,13 +550,44 @@ export class ImageGenerator {
   static async validateAuthentication(provider?: ImageProvider): Promise<AuthConfig> {
     const runtimeStatus = await checkLocalRuntime();
     ImageGenerator.localRuntimeStatus = runtimeStatus;
+    // Priority: OpenAI (gpt-image-2) > Codex CLI > Gemini
+    const hasOpenAIKey = !!(
+      process.env.IMAGE_AGENT_OPENAI_API_KEY ||
+      process.env.NANOBANANA_OPENAI_API_KEY ||
+      process.env.OPENAI_API_KEY
+    );
+
     const resolvedProvider =
       provider ||
-      (process.env.IMAGE_AGENT_PROVIDER === 'openai' ||
+      (process.env.IMAGE_AGENT_PROVIDER === 'codex' ||
+      process.env.IMAGE_AGENT_PROVIDER === 'openai' ||
       process.env.NANOBANANA_PROVIDER === 'openai' ||
       process.env.IMAGE_PLUS_PROVIDER === 'openai'
-        ? 'openai'
-        : 'gemini');
+        ? (process.env.IMAGE_AGENT_PROVIDER === 'codex' ? 'codex' : 'openai')
+        : hasOpenAIKey
+          ? 'openai'
+          : runtimeStatus.codexReady
+            ? 'codex'
+            : 'gemini');
+
+    if (resolvedProvider === 'codex') {
+      if (runtimeStatus.codexReady) {
+        console.error(`✓ Using Codex CLI runtime (${runtimeStatus.codexVersion})`);
+        return {
+          apiKey: '',
+          provider: 'codex',
+          keyType: 'OPENAI_API_KEY',
+          source: 'codex_cli',
+        };
+      }
+
+      return {
+        apiKey: '',
+        provider: 'codex',
+        keyType: 'OPENAI_API_KEY',
+        source: 'none',
+      };
+    }
 
     if (resolvedProvider === 'openai') {
       const imageAgentOpenAIKey = process.env.IMAGE_AGENT_OPENAI_API_KEY;
@@ -460,16 +620,6 @@ export class ImageGenerator {
           provider: 'openai',
           keyType: 'OPENAI_API_KEY',
           source: 'OPENAI_API_KEY',
-        };
-      }
-
-      if (runtimeStatus.codexPath) {
-        console.error('✓ No OpenAI API key found, using Codex CLI runtime');
-        return {
-          apiKey: '',
-          provider: 'openai',
-          keyType: 'OPENAI_API_KEY',
-          source: 'codex_cli',
         };
       }
 
@@ -587,6 +737,11 @@ export class ImageGenerator {
       }
     }
 
+    if (runtimeStatus.geminiReady) {
+      console.error(`✓ No Gemini API key found, using Gemini CLI runtime (${runtimeStatus.geminiVersion})`);
+      return { apiKey: '', provider: 'gemini', keyType: 'GEMINI_API_KEY', source: 'gemini_cli' };
+    }
+
     const allowOAuthAdc =
       process.env.IMAGE_AGENT_ALLOW_OAUTH_ADC !== '0' &&
       process.env.IMAGE_AGENT_ALLOW_OAUTH_ADC !== 'false' &&
@@ -597,11 +752,6 @@ export class ImageGenerator {
         '✓ No API key found, using OAuth/ADC credentials (Gemini CLI login/session)',
       );
       return { apiKey: '', provider: 'gemini', keyType: 'GEMINI_API_KEY', source: 'oauth_adc' };
-    }
-
-    if (runtimeStatus.geminiPath) {
-      console.error('✓ No Gemini API key found, using Gemini CLI runtime');
-      return { apiKey: '', provider: 'gemini', keyType: 'GEMINI_API_KEY', source: 'gemini_cli' };
     }
 
     return { apiKey: '', provider: 'gemini', keyType: 'GEMINI_API_KEY', source: 'none' };
@@ -778,10 +928,6 @@ export class ImageGenerator {
 
   private async ensureAuthenticationReady(): Promise<void> {
     if (this.authConfig.provider === 'openai') {
-      if (this.authConfig.source === 'codex_cli') {
-        return;
-      }
-
       if (!this.hasApiKey()) {
         throw new Error(
           '未检测到 Codex/Gemini 本地 runtime。请先安装 Codex CLI/Gemini CLI；只有要走 OpenAI 直连 API 模式时才需要 IMAGE_AGENT_OPENAI_API_KEY / OPENAI_API_KEY。',
@@ -790,7 +936,11 @@ export class ImageGenerator {
       return;
     }
 
-    if (this.authConfig.source === 'oauth_adc' || this.authConfig.source === 'gemini_cli') {
+    if (
+      this.authConfig.source === 'codex_cli' ||
+      this.authConfig.source === 'oauth_adc' ||
+      this.authConfig.source === 'gemini_cli'
+    ) {
       return;
     }
 
@@ -950,16 +1100,30 @@ export class ImageGenerator {
         );
 
         try {
-      if (provider === 'openai') {
-        if (this.authConfig.source === 'codex_cli') {
-          return {
-            success: false,
-            message: 'Codex CLI runtime is ready',
-            error:
-              '已检测到 Codex CLI，因此本地 agent workflow 不需要 API key。当前 generate --provider openai 是 OpenAI HTTP 直连模式，必须有 API key 才能直接落图；请在 Codex/OpenClaw/Hermes agent 中使用内置 skill，或改用 gemini 本地登录态/直连 API 模式。',
-          };
-        }
-
+          if (provider === 'codex') {
+            const fullPath = await this.generateViaCodexRuntime(
+              currentPrompt,
+              outputPath,
+              request,
+              effectiveModel,
+              i,
+              aspectRatio,
+            );
+            generatedFiles.push(fullPath);
+            console.error('DEBUG - Image saved (codex image_gen):', fullPath);
+          } else if (provider === 'gemini' && this.authConfig.source === 'gemini_cli') {
+            return {
+              success: false,
+              message: 'Gemini CLI detected but image generation requires an API key.',
+              error:
+                'Gemini CLI is installed but image generation requires a Gemini API key.\n' +
+                '  Get a free key at: https://aistudio.google.com/apikey\n' +
+                '  Then set: export GEMINI_API_KEY=<your-key>\n' +
+                '\n' +
+                'For key-free image generation, install Codex CLI instead:\n' +
+                '  npm install -g @openai/codex && codex login',
+            };
+          } else if (provider === 'openai') {
             const base64List = await this.generateOpenAIImage(
               currentPrompt,
               effectiveModel,

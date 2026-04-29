@@ -16,11 +16,16 @@ Be intelligent about interpreting the user's intent from their natural language 
 
 Authentication flow (must follow before any generation/edit call):
 1) First call `check_auth_status`.
-2) If Codex CLI or Gemini CLI is available, do not ask the user for an API key.
-3) If `ready=false` and neither local runtime is available, ask the user to install Codex CLI/Gemini CLI first; only ask for a provider API key when direct API mode is explicitly required.
-4) After user provides key, call `configure_api_key` with that key.
-5) If validation succeeds (or local runtime/OAuth/ADC is already ready), continue with the originally intended tool call.
-6) If validation fails, clearly relay the failure reason and ask user to provide another key.
+2) If an OpenAI API key (`IMAGE_AGENT_OPENAI_API_KEY` or `OPENAI_API_KEY`) is available, use `openai` provider with `gpt-image-2` — best quality, no CLI needed.
+3) If no OpenAI key but Codex CLI is available, use Codex — no API key needed.
+4) If no OpenAI key and no Codex, but Gemini CLI is available, note that a Gemini API key is still required for image generation.
+5) If `ready=false` and no runtime or key is available, guide the user step by step:
+   a) First choice: set an OpenAI API key — `export IMAGE_AGENT_OPENAI_API_KEY="your_key"` for gpt-image-2.
+   b) Second choice: install Codex CLI — `npm install -g @openai/codex` then `codex login` (no API key ever needed).
+   c) Third choice: install Gemini CLI — `npm install -g @google/gemini-cli` then `gemini auth login`, but note that a Gemini API key (https://aistudio.google.com/apikey) is still required for image generation.
+6) After user provides key, call `configure_api_key` with that key.
+7) If validation succeeds (or local runtime/OAuth/ADC is already ready), continue with the originally intended tool call.
+8) If validation fails, clearly relay the failure reason and ask user to provide another key.
 
 User request: {{args}}
 """

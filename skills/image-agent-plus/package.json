@@ -1,7 +1,7 @@
 {
   "name": "image-agent-plus",
-  "version": "2.0.0",
-  "description": "OpenClaw/Hermes/Codex skill wrapper for image-agent-plus CLI.",
+  "version": "2.0.5",
+  "description": "image2-first image generation skill for OpenClaw, Hermes, and Codex.",
   "type": "module",
   "author": "webkubor",
   "license": "Apache-2.0",

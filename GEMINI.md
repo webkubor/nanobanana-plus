@@ -9,8 +9,15 @@ image-agent-plus check
 
 image-agent-plus generate \
   --prompt "..." \
-  --aspect-ratio "16:9" \
-  --model "gemini-3.1-flash-image-preview"
+  --provider codex \
+  --aspect-ratio "16:9"
+```
+
+For Codex image generation, do not nest `codex exec`. Generate the image in the active Codex session, then collect the latest generated file:
+
+```bash
+image-agent-plus collect-codex
+image-agent-plus collect-codex --filename ~/Desktop/output.png
 ```
 
 ## Auth Policy
@@ -23,6 +30,7 @@ image-agent-plus generate \
 
 | Value | Notes |
 |-------|-------|
+| Codex default | Codex CLI image flow; no `--model` needed |
 | `gemini-3.1-flash-image-preview` | Default fast Gemini image model |
 | `gemini-3-pro-image-preview` | Higher-detail Gemini image model |
 | `gemini-2.5-flash-image` | Legacy Gemini image compatibility |
@@ -31,4 +39,4 @@ image-agent-plus generate \
 | `gpt-image-1.5` | OpenAI image direct API mode |
 | `gpt-image-1` | OpenAI image direct API mode |
 
-When `model` is omitted, the CLI uses `IMAGE_AGENT_MODEL`, then legacy `NANOBANANA_MODEL`, then the default Gemini image model.
+When `model` is omitted, Codex provider does not pass `-m` and lets Codex CLI choose its own image flow. Gemini provider uses `IMAGE_AGENT_MODEL`, then legacy `NANOBANANA_MODEL`, then the default Gemini image model.

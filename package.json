@@ -1,8 +1,30 @@
 {
   "name": "image-agent-plus",
-  "version": "2.0.0",
+  "version": "2.0.5",
   "type": "module",
-  "description": "Local-first image agent workflow for Codex CLI, Gemini CLI, OpenClaw, and Hermes",
+  "description": "One-sentence to great image. Smart AI image generator powered by Codex CLI or Gemini CLI — no API key needed, auto prompt expansion, reusable profiles.",
+  "keywords": [
+    "image-generation",
+    "ai-image",
+    "codex-cli",
+    "gemini-cli",
+    "text-to-image",
+    "local-first",
+    "no-api-key",
+    "prompt-engineering",
+    "image-agent",
+    "openai",
+    "gemini",
+    "cli-tool",
+    "profile",
+    "smart-prompt",
+    "aspect-ratio",
+    "instagram",
+    "xiaohongshu",
+    "ai-art",
+    "generative-ai",
+    "agent"
+  ],
   "packageManager": "pnpm@10.25.0",
   "bin": {
     "image-agent-plus": "./bin/image-agent-plus.js"

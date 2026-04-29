@@ -16,21 +16,24 @@ export class FileHandler {
     '..',
   );
   private static readonly OUTPUT_DIR = 'image-agent-plus-output';
+  private static readonly HOME_DIR = process.env.HOME || process.cwd();
+  private static readonly DESKTOP_DIR = path.join(this.HOME_DIR, 'Desktop');
   private static readonly SEARCH_PATHS = [
     this.PROJECT_ROOT,
     path.join(this.PROJECT_ROOT, 'images'),
     path.join(this.PROJECT_ROOT, 'input'),
     path.join(this.PROJECT_ROOT, this.OUTPUT_DIR),
+    path.join(this.DESKTOP_DIR, this.OUTPUT_DIR),
     process.cwd(),
     path.join(process.cwd(), 'images'),
     path.join(process.cwd(), 'input'),
     path.join(process.cwd(), this.OUTPUT_DIR),
-    path.join(process.env.HOME || '~', 'Downloads'),
-    path.join(process.env.HOME || '~', 'Desktop'),
+    path.join(this.HOME_DIR, 'Downloads'),
+    this.DESKTOP_DIR,
   ];
 
   static ensureOutputDirectory(): string {
-    const outputPath = path.join(this.PROJECT_ROOT, this.OUTPUT_DIR);
+    const outputPath = path.join(this.DESKTOP_DIR, this.OUTPUT_DIR);
 
     if (!fs.existsSync(outputPath)) {
       fs.mkdirSync(outputPath, { recursive: true });
@@ -131,10 +134,50 @@ export class FileHandler {
     filename: string,
   ): Promise<string> {
     const buffer = Buffer.from(base64Data, 'base64');
-    const fullPath = path.join(outputPath, filename);
+    const detectedExtension = this.detectImageExtension(buffer);
+    const requestedExtension = path.extname(filename).toLowerCase();
+    const baseName = requestedExtension
+      ? filename.slice(0, -requestedExtension.length)
+      : filename;
+    const normalizedFilename =
+      detectedExtension && requestedExtension !== detectedExtension
+        ? `${baseName}${detectedExtension}`
+        : filename;
+    const fullPath = path.join(outputPath, normalizedFilename);
 
     await fs.promises.writeFile(fullPath, buffer);
     return fullPath;
+  }
+
+  private static detectImageExtension(buffer: Buffer): string | null {
+    if (
+      buffer.length >= 8 &&
+      buffer[0] === 0x89 &&
+      buffer[1] === 0x50 &&
+      buffer[2] === 0x4e &&
+      buffer[3] === 0x47
+    ) {
+      return '.png';
+    }
+
+    if (
+      buffer.length >= 3 &&
+      buffer[0] === 0xff &&
+      buffer[1] === 0xd8 &&
+      buffer[2] === 0xff
+    ) {
+      return '.jpg';
+    }
+
+    if (
+      buffer.length >= 12 &&
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+    ) {
+      return '.webp';
+    }
+
+    return null;
   }
 
   static async readImageAsBase64(filePath: string): Promise<string> {

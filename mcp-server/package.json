@@ -1,6 +1,6 @@
 {
   "name": "image-agent-plus-mcp-server",
-  "version": "2.0.0",
+  "version": "2.0.5",
   "type": "module",
   "description": "CLI runtime for local-first image agent workflows",
   "main": "dist/cli-entry.js",

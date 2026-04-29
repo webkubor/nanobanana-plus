@@ -6,6 +6,15 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 ---
 
+## [2.0.5] - 2026-04-29
+
+### Changed
+- Updated the ClawHub store showcase image to use a GitHub raw image URL so the store can render it outside the package archive.
+- Added the AI-era Chinese editorial poster asset used by the README and ClawHub store page.
+- Synced package versions with the ClawHub store release.
+
+---
+
 ## [2.0.0] - 2026-04-29
 
 ### Breaking Changes
@@ -15,7 +24,10 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 
 ### Added
 - Local runtime initialization check: detect `codex`, `gemini`, `openclaw`, and `hermes`.
+- Runtime version checks for Codex CLI and Gemini CLI, with upgrade guidance when the installed version is too old.
+- `--provider codex` runtime routing without API keys. Raster output is intentionally not faked through SVG; it requires a real CLI image-output capability.
 - Runtime priority: use Codex CLI by default when both Codex and Gemini are installed; fallback to Gemini CLI when Codex is missing.
+- `collect-codex` command to copy the latest active Codex generated image from `~/.codex/generated_images` into the user output path.
 - Agent skills:
   - `image-prompt-refiner`: turns a short image request into a production prompt and asks targeted clarification questions when size/aspect ratio or intent is missing.
   - `reference-style-transfer`: extracts a reference image style brief for generating a new image with the same visual language.
@@ -25,6 +37,8 @@ Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog]
 ### Changed
 - API keys are no longer treated as the default setup path. Codex CLI and Gemini CLI users should not provide API keys for local agent runtime usage.
 - API keys are documented only as optional direct provider API mode.
+- Default generated-image output now goes to `~/Desktop/image-agent-plus-output/` when the user does not pass `--filename`; explicit `--filename` paths are still honored exactly.
+- Codex image generation is documented as an active Codex image-tool flow; the CLI no longer pretends nested `codex exec` is the correct image generation path.
 
 ---
 
