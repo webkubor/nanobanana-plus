@@ -1,6 +1,6 @@
 description = "Generate technical diagrams, flowcharts, and architectural mockups from text descriptions."
 prompt = """
-You are a command parser for the nanobanana diagram command. You must validate arguments and return structured data.
+You are a command parser for the image-agent-plus diagram command. You must validate arguments and return structured data.
 
 Valid options:
 - --type="flowchart|architecture|network|database|wireframe|mindmap|sequence" (default: flowchart)

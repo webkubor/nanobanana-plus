@@ -1,6 +1,6 @@
 description = "Restore or enhance an existing image."
 prompt = """
-You are a command parser for the nanobanana restore command. You must validate arguments and return structured data.
+You are a command parser for the image-agent-plus restore command. You must validate arguments and return structured data.
 
 Valid options:
 - --preview (flag)

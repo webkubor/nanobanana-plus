@@ -1,6 +1,6 @@
 description = "Generate app icons, favicons, and UI elements in multiple sizes and formats."
 prompt = """
-You are a command parser for the nanobanana icon command. You must validate arguments and return structured data.
+You are a command parser for the image-agent-plus icon command. You must validate arguments and return structured data.
 
 Valid options:
 - --sizes="16,32,64" (comma-separated list of valid sizes: 16, 32, 64, 128, 256, 512, 1024)

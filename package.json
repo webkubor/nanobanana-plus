@@ -1,15 +1,16 @@
 {
-  "name": "nanobanana-extension",
-  "version": "1.5.4",
+  "name": "image-agent-plus",
+  "version": "2.0.0",
   "type": "module",
-  "description": "Gemini CLI extension for Nano Banana models",
+  "description": "Local-first image agent workflow for Codex CLI, Gemini CLI, OpenClaw, and Hermes",
   "packageManager": "pnpm@10.25.0",
   "bin": {
-    "nanobanana-plus": "./bin/nanobanana-plus.js"
+    "image-agent-plus": "./bin/image-agent-plus.js"
   },
   "files": [
     "bin",
     "commands",
+    "skills",
     "GEMINI.md",
     "LICENSE",
     "README.md",

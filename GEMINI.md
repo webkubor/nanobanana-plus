@@ -1,42 +1,34 @@
-# nanobanana-plus — CLI image generator for Nano Banana models
+# image-agent-plus
 
-> Fork of [nanobanana](https://github.com/gemini-cli-extensions/nanobanana), Apache 2.0.
-> Adds per-call model switching and aspect ratio control.
+Local-first image agent workflow for Codex CLI, Gemini CLI, OpenClaw, and Hermes.
 
 ## CLI Usage
 
 ```bash
-nanobanana-plus generate \
+image-agent-plus check
+
+image-agent-plus generate \
   --prompt "..." \
   --aspect-ratio "16:9" \
   --model "gemini-3.1-flash-image-preview"
 ```
 
-## Model Selection (per call)
+## Auth Policy
 
-| Value | Model | Notes |
-|-------|-------|-------|
-| `gemini-3.1-flash-image-preview` | Nano Banana 2 | **Default**, fast, quota-friendly |
-| `gemini-3-pro-image-preview` | Nano Banana Pro | High quality, richer detail |
-| `gemini-2.5-flash-image` | Nano Banana v1 | Legacy compatibility |
-| `imagen-4.0-ultra-generate-001` | Imagen 4 Ultra | Top realism, requires API Key |
-| `imagen-4.0-fast-generate-001` | Imagen 4 Fast | Speed+quality, requires API Key |
+- Prefer installed local runtime: Codex CLI first, Gemini CLI second.
+- Do not ask users for API keys when Codex CLI or Gemini CLI is available.
+- Only ask for API keys when neither local runtime is available, or when the user explicitly chooses direct provider API mode.
 
-When `model` is omitted, uses `NANOBANANA_MODEL` env var or the default flash model.
+## Model Selection
 
-## Aspect Ratio
+| Value | Notes |
+|-------|-------|
+| `gemini-3.1-flash-image-preview` | Default fast Gemini image model |
+| `gemini-3-pro-image-preview` | Higher-detail Gemini image model |
+| `gemini-2.5-flash-image` | Legacy Gemini image compatibility |
+| `imagen-4.0-ultra-generate-001` | Imagen 4 Ultra direct API mode |
+| `imagen-4.0-fast-generate-001` | Imagen 4 Fast direct API mode |
+| `gpt-image-1.5` | OpenAI image direct API mode |
+| `gpt-image-1` | OpenAI image direct API mode |
 
-`--aspect-ratio` supports: `"16:9"` `"9:16"` `"1:1"` `"4:3"` `"3:4"`
-
-## All Options
-
-| Option | Required | Default | Description |
-|--------|:--------:|---------|-------------|
-| `--prompt` | yes | — | Image description |
-| `--model` | no | flash | Model to use |
-| `--aspect-ratio` | no | `1:1` | Output aspect ratio |
-| `--output-count` | no | `1` | Number of images (1–8) |
-| `--filename` | no | auto | Output file path |
-| `--file-format` | no | `png` | `png` or `jpeg` |
-| `--seed` | no | — | Deterministic seed |
-| `--preview` / `--no-preview` | no | — | Toggle preview |
+When `model` is omitted, the CLI uses `IMAGE_AGENT_MODEL`, then legacy `NANOBANANA_MODEL`, then the default Gemini image model.

@@ -5,18 +5,21 @@ import path from 'node:path';
 import process from 'node:process';
 import { ImageGenerator } from './imageGenerator.js';
 import { ImageGenerationRequest } from './types.js';
+import { checkLocalRuntime, ensureLocalRuntimeReady } from './localRuntime.js';
 
 type CliOptions = Record<string, string | boolean>;
 
 function usage() {
-  console.log(`nanobanana-plus
+  console.log(`image-agent-plus
 
 Usage:
-  nanobanana-plus generate --prompt "..." [--filename out.png] [--aspect-ratio 16:9]
-                     [--model MODEL] [--output-count 1] [--file-format png|jpeg]
+  image-agent-plus generate --prompt "..." [--filename out.png] [--aspect-ratio 16:9]
+                     [--provider gemini|openai] [--model MODEL]
+                     [--output-count 1] [--file-format png|jpeg]
                      [--seed 123] [--preview | --no-preview]
 
 Commands:
+  check       Check local Codex/Gemini/OpenClaw/Hermes runtime and auth environment
   generate    Generate one or more images locally
 `);
 }
@@ -153,6 +156,9 @@ function printOutputs(files: string[]) {
 }
 
 async function runGenerate(options: CliOptions) {
+  const runtimeStatus = await ensureLocalRuntimeReady();
+  console.error(`✓ ${runtimeStatus.message}`);
+
   const prompt = typeof options.prompt === 'string' ? options.prompt : '';
   if (!prompt) {
     throw new Error('--prompt is required for generate');
@@ -170,13 +176,22 @@ async function runGenerate(options: CliOptions) {
     throw new Error('--output-count must be an integer between 1 and 8');
   }
 
-  const authConfig = ImageGenerator.validateAuthentication();
+  const provider =
+    options.provider === 'openai' || options.provider === 'gemini'
+      ? options.provider
+      : undefined;
+  if (options.provider && !provider) {
+    throw new Error('--provider must be "gemini" or "openai"');
+  }
+
+  const authConfig = await ImageGenerator.validateAuthentication(provider);
   const imageGenerator = new ImageGenerator(authConfig);
   const filename = typeof options.filename === 'string' ? options.filename : undefined;
 
   const request: ImageGenerationRequest = {
     prompt,
     mode: 'generate',
+    provider,
     model: typeof options.model === 'string' ? options.model as ImageGenerationRequest['model'] : undefined,
     aspectRatio:
       typeof options['aspect-ratio'] === 'string' ? options['aspect-ratio'] : undefined,
@@ -201,11 +216,35 @@ async function runGenerate(options: CliOptions) {
   printOutputs(finalFiles);
 }
 
+async function runCheck() {
+  const runtimeStatus = await checkLocalRuntime();
+  console.log('Local runtime');
+  console.log(`  ready: ${runtimeStatus.ready ? 'yes' : 'no'}`);
+  console.log(`  default: ${runtimeStatus.defaultRuntime || '-'}`);
+  console.log(`  codex: ${runtimeStatus.codexPath || '-'}`);
+  console.log(`  gemini: ${runtimeStatus.geminiPath || '-'}`);
+  console.log(`  openclaw: ${runtimeStatus.openclawPath || '-'}`);
+  console.log(`  hermes: ${runtimeStatus.hermesPath || '-'}`);
+  console.log(
+    `  agent runtimes: ${runtimeStatus.agentRuntimes.length ? runtimeStatus.agentRuntimes.join(', ') : '-'}`,
+  );
+  console.log(`  message: ${runtimeStatus.message}`);
+
+  if (!runtimeStatus.ready) {
+    process.exitCode = 1;
+  }
+}
+
 async function main() {
   const { command, options } = parseArgs(process.argv.slice(2));
 
   if (options.help || command === 'help') {
     usage();
+    return;
+  }
+
+  if (command === 'check') {
+    await runCheck();
     return;
   }
 

@@ -1,7 +1,9 @@
 
 import { GoogleGenAI } from '@google/genai';
 import { FileHandler } from './fileHandler.js';
+import { checkLocalRuntime } from './localRuntime.js';
 import {
+  ImageProvider,
   ImageGenerationRequest,
   ImageGenerationResponse,
   AuthConfig,
@@ -16,10 +18,12 @@ const execAsync = promisify(exec);
 export class ImageGenerator {
   private ai: GoogleGenAI;
   private modelName: string;
+  private provider: ImageProvider;
   private authConfig: AuthConfig;
   private authValidated = false;
   private authValidationError: string | null = null;
   private static readonly DEFAULT_MODEL = 'gemini-3.1-flash-image-preview';
+  private static readonly DEFAULT_OPENAI_MODEL = 'gpt-image-1.5';
   private static readonly MODEL_LIST_ENDPOINT =
     'https://generativelanguage.googleapis.com/v1beta/models';
   private static readonly ASPECT_RATIO_PRESETS = {
@@ -32,19 +36,42 @@ export class ImageGenerator {
     'imagen-4.0-fast-generate-001': 'gemini-3.1-flash-image-preview',
   } as const;
 
+  private static localRuntimeStatus:
+    Awaited<ReturnType<typeof checkLocalRuntime>> | null = null;
+
   constructor(authConfig: AuthConfig) {
     this.authConfig = authConfig;
+    this.provider = authConfig.provider;
     this.ai = new GoogleGenAI(
       authConfig.apiKey ? { apiKey: authConfig.apiKey } : {},
     );
     this.modelName =
-      process.env.NANOBANANA_MODEL || ImageGenerator.DEFAULT_MODEL;
+      authConfig.provider === 'openai'
+        ? process.env.IMAGE_AGENT_OPENAI_MODEL ||
+          process.env.NANOBANANA_OPENAI_MODEL ||
+          process.env.OPENAI_IMAGE_MODEL ||
+          ImageGenerator.DEFAULT_OPENAI_MODEL
+        : process.env.IMAGE_AGENT_MODEL ||
+          process.env.NANOBANANA_MODEL ||
+          ImageGenerator.DEFAULT_MODEL;
+    console.error(`DEBUG - Default image provider: ${this.provider}`);
     console.error(`DEBUG - Default image model: ${this.modelName}`);
+  }
+
+  private resolveProvider(request: ImageGenerationRequest): ImageProvider {
+    return request.provider || this.provider;
   }
 
   // 解析每次请求实际使用的模型（per-call override 优先）
   private resolveModel(request: ImageGenerationRequest): string {
-    const model = request.model || this.modelName;
+    const provider = this.resolveProvider(request);
+    const model = request.model ||
+      (provider === 'openai'
+        ? process.env.IMAGE_AGENT_OPENAI_MODEL ||
+          process.env.NANOBANANA_OPENAI_MODEL ||
+          process.env.OPENAI_IMAGE_MODEL ||
+          ImageGenerator.DEFAULT_OPENAI_MODEL
+        : this.modelName);
     console.error(`DEBUG - Resolved model for this call: ${model}`);
     return model;
   }
@@ -99,6 +126,10 @@ export class ImageGenerator {
   }
 
   private getModelLabel(model: string): string {
+    if (model.startsWith('gpt-image') || model === 'chatgpt-image-latest') {
+      return `OpenAI ${model}`;
+    }
+
     if (model.startsWith('imagen-4.') && model.includes('ultra')) {
       return 'Imagen 4 Ultra';
     }
@@ -116,6 +147,73 @@ export class ImageGenerator {
     }
 
     return 'Nano Banana v1';
+  }
+
+  private resolveOpenAIImageSize(aspectRatio?: string): string {
+    switch (aspectRatio) {
+      case undefined:
+      case '1:1':
+        return '1024x1024';
+      case '9:16':
+      case '3:4':
+      case '2:3':
+        return '1024x1536';
+      case '16:9':
+      case '4:3':
+      case '3:2':
+      case '21:9':
+        return '1536x1024';
+      default:
+        throw new Error(
+          `OpenAI provider does not support exact aspect ratio "${aspectRatio}". ` +
+          'Use 1:1, 9:16/3:4, or 16:9/4:3 style ratios.',
+        );
+    }
+  }
+
+  private async generateOpenAIImage(
+    prompt: string,
+    model: string,
+    apiKey: string,
+    aspectRatio?: string,
+  ): Promise<string[]> {
+    const body = JSON.stringify({
+      model,
+      prompt,
+      size: this.resolveOpenAIImageSize(aspectRatio),
+      n: 1,
+    });
+
+    console.error(`DEBUG - Using OpenAI Images API for model: ${model}`);
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      let errMsg = `OpenAI Images API error ${response.status}`;
+      try {
+        const payload = (await response.json()) as { error?: { message?: string } };
+        errMsg = payload.error?.message || errMsg;
+      } catch { /* ignore */ }
+      throw new Error(errMsg);
+    }
+
+    const json = (await response.json()) as {
+      data?: Array<{ b64_json?: string; url?: string }>;
+    };
+
+    const results: string[] = [];
+    for (const item of json.data || []) {
+      if (item.b64_json && item.b64_json.length > 100) {
+        results.push(item.b64_json);
+      }
+    }
+    return results;
   }
 
   // 使用 predict REST 接口调用 Imagen 4 Ultra / Fast
@@ -320,21 +418,109 @@ export class ImageGenerator {
     await Promise.all(previewPromises);
   }
 
-  static validateAuthentication(): AuthConfig {
-    // 支持多 key 轮换：NANOBANANA_API_KEYS="key1,key2,key3" 逗号分隔
-    const nanoMultiKeys = process.env.NANOBANANA_API_KEYS;
-    if (nanoMultiKeys) {
-      const keys = nanoMultiKeys.split(',').map(k => k.trim()).filter(k => k);
+  static async validateAuthentication(provider?: ImageProvider): Promise<AuthConfig> {
+    const runtimeStatus = await checkLocalRuntime();
+    ImageGenerator.localRuntimeStatus = runtimeStatus;
+    const resolvedProvider =
+      provider ||
+      (process.env.IMAGE_AGENT_PROVIDER === 'openai' ||
+      process.env.NANOBANANA_PROVIDER === 'openai' ||
+      process.env.IMAGE_PLUS_PROVIDER === 'openai'
+        ? 'openai'
+        : 'gemini');
+
+    if (resolvedProvider === 'openai') {
+      const imageAgentOpenAIKey = process.env.IMAGE_AGENT_OPENAI_API_KEY;
+      if (imageAgentOpenAIKey) {
+        console.error('✓ Found IMAGE_AGENT_OPENAI_API_KEY environment variable');
+        return {
+          apiKey: imageAgentOpenAIKey,
+          provider: 'openai',
+          keyType: 'OPENAI_API_KEY',
+          source: 'IMAGE_AGENT_OPENAI_API_KEY',
+        };
+      }
+
+      const nanoOpenAIKey = process.env.NANOBANANA_OPENAI_API_KEY;
+      if (nanoOpenAIKey) {
+        console.error('✓ Found NANOBANANA_OPENAI_API_KEY environment variable');
+        return {
+          apiKey: nanoOpenAIKey,
+          provider: 'openai',
+          keyType: 'OPENAI_API_KEY',
+          source: 'NANOBANANA_OPENAI_API_KEY',
+        };
+      }
+
+      const openAIKey = process.env.OPENAI_API_KEY;
+      if (openAIKey) {
+        console.error('✓ Found OPENAI_API_KEY environment variable');
+        return {
+          apiKey: openAIKey,
+          provider: 'openai',
+          keyType: 'OPENAI_API_KEY',
+          source: 'OPENAI_API_KEY',
+        };
+      }
+
+      if (runtimeStatus.codexPath) {
+        console.error('✓ No OpenAI API key found, using Codex CLI runtime');
+        return {
+          apiKey: '',
+          provider: 'openai',
+          keyType: 'OPENAI_API_KEY',
+          source: 'codex_cli',
+        };
+      }
+
+      return {
+        apiKey: '',
+        provider: 'openai',
+        keyType: 'OPENAI_API_KEY',
+        source: 'none',
+      };
+    }
+
+    // 支持多 key 轮换：IMAGE_AGENT_API_KEYS="key1,key2,key3" 逗号分隔
+    const multiKeys = process.env.IMAGE_AGENT_API_KEYS || process.env.NANOBANANA_API_KEYS;
+    const multiKeySource: AuthConfig['source'] = process.env.IMAGE_AGENT_API_KEYS
+      ? 'IMAGE_AGENT_API_KEYS'
+      : 'NANOBANANA_API_KEYS';
+    if (multiKeys) {
+      const keys = multiKeys.split(',').map(k => k.trim()).filter(k => k);
       if (keys.length > 0) {
-        console.error(`✓ Found NANOBANANA_API_KEYS with ${keys.length} keys, will rotate`);
+        console.error(`✓ Found ${multiKeySource} with ${keys.length} keys, will rotate`);
         return {
           apiKey: keys[0],  // 初始使用第一个
+          provider: 'gemini',
           keyType: 'GEMINI_API_KEY',
-          source: 'NANOBANANA_API_KEYS',
+          source: multiKeySource,
           apiKeys: keys,
           currentKeyIndex: 0,
         };
       }
+    }
+
+    const imageAgentGeminiKey = process.env.IMAGE_AGENT_GEMINI_API_KEY;
+    if (imageAgentGeminiKey) {
+      console.error('✓ Found IMAGE_AGENT_GEMINI_API_KEY environment variable');
+      return {
+        apiKey: imageAgentGeminiKey,
+        provider: 'gemini',
+        keyType: 'GEMINI_API_KEY',
+        source: 'IMAGE_AGENT_GEMINI_API_KEY',
+      };
+    }
+
+    const imageAgentGoogleKey = process.env.IMAGE_AGENT_GOOGLE_API_KEY;
+    if (imageAgentGoogleKey) {
+      console.error('✓ Found IMAGE_AGENT_GOOGLE_API_KEY environment variable');
+      return {
+        apiKey: imageAgentGoogleKey,
+        provider: 'gemini',
+        keyType: 'GOOGLE_API_KEY',
+        source: 'IMAGE_AGENT_GOOGLE_API_KEY',
+      };
     }
 
     const nanoGeminiKey = process.env.NANOBANANA_GEMINI_API_KEY;
@@ -342,6 +528,7 @@ export class ImageGenerator {
       console.error('✓ Found NANOBANANA_GEMINI_API_KEY environment variable');
       return {
         apiKey: nanoGeminiKey,
+        provider: 'gemini',
         keyType: 'GEMINI_API_KEY',
         source: 'NANOBANANA_GEMINI_API_KEY',
       };
@@ -352,19 +539,22 @@ export class ImageGenerator {
       console.error('✓ Found NANOBANANA_GOOGLE_API_KEY environment variable');
       return {
         apiKey: nanoGoogleKey,
+        provider: 'gemini',
         keyType: 'GOOGLE_API_KEY',
         source: 'NANOBANANA_GOOGLE_API_KEY',
       };
     }
 
     const allowFallback =
+      process.env.IMAGE_AGENT_ALLOW_FALLBACK_KEYS === '1' ||
+      process.env.IMAGE_AGENT_ALLOW_FALLBACK_KEYS === 'true' ||
       process.env.NANOBANANA_ALLOW_FALLBACK_KEYS === '1' ||
       process.env.NANOBANANA_ALLOW_FALLBACK_KEYS === 'true';
 
     if (!allowFallback) {
       if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) {
         console.error(
-          '⚠️ GEMINI_API_KEY/GOOGLE_API_KEY detected but ignored. Set NANOBANANA_ALLOW_FALLBACK_KEYS=true to allow fallback keys.',
+          '⚠️ GEMINI_API_KEY/GOOGLE_API_KEY detected but ignored. Set IMAGE_AGENT_ALLOW_FALLBACK_KEYS=true to allow fallback keys.',
         );
       }
     }
@@ -377,6 +567,7 @@ export class ImageGenerator {
         );
         return {
           apiKey: geminiKey,
+          provider: 'gemini',
           keyType: 'GEMINI_API_KEY',
           source: 'GEMINI_API_KEY',
         };
@@ -389,6 +580,7 @@ export class ImageGenerator {
         );
         return {
           apiKey: googleKey,
+          provider: 'gemini',
           keyType: 'GOOGLE_API_KEY',
           source: 'GOOGLE_API_KEY',
         };
@@ -396,16 +588,23 @@ export class ImageGenerator {
     }
 
     const allowOAuthAdc =
+      process.env.IMAGE_AGENT_ALLOW_OAUTH_ADC !== '0' &&
+      process.env.IMAGE_AGENT_ALLOW_OAUTH_ADC !== 'false' &&
       process.env.NANOBANANA_ALLOW_OAUTH_ADC !== '0' &&
       process.env.NANOBANANA_ALLOW_OAUTH_ADC !== 'false';
     if (allowOAuthAdc) {
       console.error(
         '✓ No API key found, using OAuth/ADC credentials (Gemini CLI login/session)',
       );
-      return { apiKey: '', keyType: 'GEMINI_API_KEY', source: 'oauth_adc' };
+      return { apiKey: '', provider: 'gemini', keyType: 'GEMINI_API_KEY', source: 'oauth_adc' };
     }
 
-    return { apiKey: '', keyType: 'GEMINI_API_KEY', source: 'none' };
+    if (runtimeStatus.geminiPath) {
+      console.error('✓ No Gemini API key found, using Gemini CLI runtime');
+      return { apiKey: '', provider: 'gemini', keyType: 'GEMINI_API_KEY', source: 'gemini_cli' };
+    }
+
+    return { apiKey: '', provider: 'gemini', keyType: 'GEMINI_API_KEY', source: 'none' };
   }
 
   getAuthStatus(): AuthStatus {
@@ -417,28 +616,35 @@ export class ImageGenerator {
       return {
         ready: true,
         hasApiKey: true,
+        provider: this.authConfig.provider,
         keyType: this.authConfig.keyType,
         source: this.authConfig.source,
         message: `✅ API key ready (${sourceLabel}).`,
       };
     }
 
-    if (this.authConfig.source === 'oauth_adc') {
+    if (
+      this.authConfig.source === 'oauth_adc' ||
+      this.authConfig.source === 'gemini_cli' ||
+      this.authConfig.source === 'codex_cli'
+    ) {
+      const label = this.getAuthModeLabel();
       return {
         ready: true,
         hasApiKey: false,
-        source: 'oauth_adc',
-        message:
-          '✅ OAuth/ADC ready (Gemini CLI login/session). You can generate images without explicitly setting API key.',
+        provider: this.authConfig.provider,
+        source: this.authConfig.source,
+        message: `✅ ${label} ready. No API key is required for local agent runtime usage.`,
       };
     }
 
     return {
       ready: false,
       hasApiKey: false,
+      provider: this.authConfig.provider,
       source: 'none',
       message:
-        '❌ No authentication configured. Provide API key or enable OAuth/ADC.',
+        '❌ No local runtime or provider auth configured. Install Codex CLI/Gemini CLI, or use API key only for direct provider API mode.',
     };
   }
 
@@ -459,7 +665,13 @@ export class ImageGenerator {
       };
     }
 
-    this.authConfig = { apiKey: normalized, keyType, source: 'runtime' };
+    this.authConfig = {
+      apiKey: normalized,
+      provider: keyType === 'OPENAI_API_KEY' ? 'openai' : 'gemini',
+      keyType,
+      source: 'runtime',
+    };
+    this.provider = this.authConfig.provider;
     this.ai = new GoogleGenAI({ apiKey: normalized });
     this.authValidated = true;
     this.authValidationError = null;
@@ -498,11 +710,21 @@ export class ImageGenerator {
     switch (this.authConfig.source) {
       case 'runtime':
         return 'Runtime API Key (session input)';
+      case 'IMAGE_AGENT_GEMINI_API_KEY':
+      case 'IMAGE_AGENT_GOOGLE_API_KEY':
+      case 'IMAGE_AGENT_OPENAI_API_KEY':
+      case 'IMAGE_AGENT_API_KEYS':
       case 'NANOBANANA_GEMINI_API_KEY':
       case 'NANOBANANA_GOOGLE_API_KEY':
       case 'GEMINI_API_KEY':
       case 'GOOGLE_API_KEY':
+      case 'NANOBANANA_OPENAI_API_KEY':
+      case 'OPENAI_API_KEY':
         return `API Key (${this.authConfig.source})`;
+      case 'codex_cli':
+        return 'Codex CLI runtime';
+      case 'gemini_cli':
+        return 'Gemini CLI runtime';
       case 'oauth_adc':
         return 'OAuth/ADC (Gemini CLI login/session)';
       default:
@@ -555,14 +777,27 @@ export class ImageGenerator {
   }
 
   private async ensureAuthenticationReady(): Promise<void> {
-    if (this.authConfig.source === 'oauth_adc') {
+    if (this.authConfig.provider === 'openai') {
+      if (this.authConfig.source === 'codex_cli') {
+        return;
+      }
+
+      if (!this.hasApiKey()) {
+        throw new Error(
+          '未检测到 Codex/Gemini 本地 runtime。请先安装 Codex CLI/Gemini CLI；只有要走 OpenAI 直连 API 模式时才需要 IMAGE_AGENT_OPENAI_API_KEY / OPENAI_API_KEY。',
+        );
+      }
+      return;
+    }
+
+    if (this.authConfig.source === 'oauth_adc' || this.authConfig.source === 'gemini_cli') {
       return;
     }
 
     if (!this.hasApiKey()) {
       throw new Error(
         '未检测到可用 API Key。请先提供 Gemini API Key（https://aistudio.google.com/apikey）。\n' +
-        '或启用 OAuth/ADC（Gemini CLI 登录态）。你也可以直接回复：我的 key 是 xxx，我会先验证可用性再继续生成。',
+        '或安装/登录 Codex CLI、Gemini CLI。只有本地 runtime 都不可用时才需要 API Key。',
       );
     }
 
@@ -700,6 +935,7 @@ export class ImageGenerator {
       const generatedFiles: string[] = [];
       const prompts = this.buildBatchPrompts(request);
       const aspectRatio = this.resolveAspectRatio(request);
+      const provider = this.resolveProvider(request);
       const { requestedModel, effectiveModel, fallbackReason } =
         this.resolveEffectiveModel(request, aspectRatio);
       let firstError: string | null = null;
@@ -714,7 +950,42 @@ export class ImageGenerator {
         );
 
         try {
-          if (this.isImagenPredictModel(effectiveModel)) {
+      if (provider === 'openai') {
+        if (this.authConfig.source === 'codex_cli') {
+          return {
+            success: false,
+            message: 'Codex CLI runtime is ready',
+            error:
+              '已检测到 Codex CLI，因此本地 agent workflow 不需要 API key。当前 generate --provider openai 是 OpenAI HTTP 直连模式，必须有 API key 才能直接落图；请在 Codex/OpenClaw/Hermes agent 中使用内置 skill，或改用 gemini 本地登录态/直连 API 模式。',
+          };
+        }
+
+            const base64List = await this.generateOpenAIImage(
+              currentPrompt,
+              effectiveModel,
+              this.authConfig.apiKey,
+              aspectRatio,
+            );
+
+            for (const imageBase64 of base64List) {
+              const filename = FileHandler.generateFilename(
+                request.styles || request.variations ? currentPrompt : request.prompt,
+                effectiveModel,
+                request.fileFormat || 'png',
+                i,
+                aspectRatio || '1:1',
+                request.customFileName
+              );
+              const fullPath = await FileHandler.saveImageFromBase64(
+                imageBase64,
+                outputPath,
+                filename,
+              );
+              generatedFiles.push(fullPath);
+              console.error('DEBUG - Image saved (openai):', fullPath);
+              break;
+            }
+          } else if (this.isImagenPredictModel(effectiveModel)) {
             // ---- Imagen 4 路径：使用 predict REST 接口 ----
             if (!this.hasApiKey()) {
               throw new Error('Imagen 4 predict 接口需要显式 API Key，无法使用 OAuth/ADC。');
@@ -870,7 +1141,8 @@ export class ImageGenerator {
         success: true,
         message: `✅ Successfully generated ${generatedFiles.length} image(s)\n` +
           `🔐 Auth: ${this.getAuthModeLabel()}\n` +
-          `🍌 Model: ${modelLabel} (${effectiveModel})\n` +
+          `🧭 Provider: ${provider}\n` +
+          `🎨 Model: ${modelLabel} (${effectiveModel})\n` +
           (fallbackReason
             ? `ℹ️ Auto-switch: requested ${requestedModel}, but ${fallbackReason}\n`
             : '') +
@@ -910,21 +1182,31 @@ export class ImageGenerator {
     // Ideal: Check for a specific error code or type from the SDK
     // Fallback: Check for revealing strings in the error message
     const errorMessage =
-      error instanceof Error ? error.message : String(error).toLowerCase();
+      error instanceof Error ? error.message : String(error);
+    const normalizedErrorMessage = errorMessage.toLowerCase();
 
-    if (errorMessage.includes('api key not valid')) {
+    if (normalizedErrorMessage.includes('api key not valid')) {
       return 'Authentication failed: The provided API key is invalid. Please provide a valid key and verify it before retrying.';
     }
 
-    if (errorMessage.includes('permission denied')) {
+    if (
+      normalizedErrorMessage.includes('openai api key') ||
+      normalizedErrorMessage.includes('image_agent_openai_api_key') ||
+      normalizedErrorMessage.includes('nanobanana_openai_api_key') ||
+      normalizedErrorMessage.includes('未检测到可用 openai api key')
+    ) {
+      return error instanceof Error ? error.message : String(error);
+    }
+
+    if (normalizedErrorMessage.includes('permission denied')) {
       return 'Authentication failed: The provided API key does not have the necessary permissions for the Gemini API. Please check your Google Cloud project settings.';
     }
 
-    if (errorMessage.includes('quota exceeded')) {
+    if (normalizedErrorMessage.includes('quota exceeded')) {
       return 'API quota exceeded. Please check your usage and limits in the Google Cloud console.';
     }
 
-    if (errorMessage.includes('insufficient authentication scopes')) {
+    if (normalizedErrorMessage.includes('insufficient authentication scopes')) {
       return 'Authentication failed: OAuth/ADC credentials were found, but they do not include the scope required for Gemini image generation.';
     }
 

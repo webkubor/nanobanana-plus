@@ -164,11 +164,13 @@ export class SystemProfileCollector {
           agents: this.AGENTS_DIR,
         },
         envFlags: {
-          hasNanobananaGeminiApiKey: Boolean(
-            process.env.NANOBANANA_GEMINI_API_KEY,
+          hasImageAgentGeminiApiKey: Boolean(
+            process.env.IMAGE_AGENT_GEMINI_API_KEY ||
+              process.env.NANOBANANA_GEMINI_API_KEY,
           ),
-          hasNanobananaGoogleApiKey: Boolean(
-            process.env.NANOBANANA_GOOGLE_API_KEY,
+          hasImageAgentGoogleApiKey: Boolean(
+            process.env.IMAGE_AGENT_GOOGLE_API_KEY ||
+              process.env.NANOBANANA_GOOGLE_API_KEY,
           ),
           hasGeminiApiKey: Boolean(process.env.GEMINI_API_KEY),
           hasGoogleApiKey: Boolean(process.env.GOOGLE_API_KEY),

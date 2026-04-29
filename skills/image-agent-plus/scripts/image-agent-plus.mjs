@@ -6,18 +6,19 @@ import path from "node:path";
 import process from "node:process";
 
 function usage() {
-  console.log(`nanobanana-plus
+  console.log(`image-agent-plus
 
 Usage:
-  node nanobanana-plus.mjs init
-  node nanobanana-plus.mjs check
-  node nanobanana-plus.mjs models
-  node nanobanana-plus.mjs generate --prompt "..." [--filename out.png] [--aspect-ratio 16:9] [--model MODEL] [--output-count 1]
+  node image-agent-plus.mjs init
+  node image-agent-plus.mjs check
+  node image-agent-plus.mjs models
+  node image-agent-plus.mjs generate --prompt "..." [--filename out.png] [--aspect-ratio 16:9] [--model MODEL] [--output-count 1]
 
 Options:
   --prompt       Image description (required for generate)
   --filename     Output file path
   --aspect-ratio  Image aspect ratio (16:9, 9:16, 1:1, 4:3, 3:4)
+  --provider     Provider to use (gemini, openai)
   --model        Model to use (gemini-3.1-flash-image-preview, gemini-3-pro-image-preview, etc.)
   --output-count Number of images to generate (1-8)
 `);
@@ -68,17 +69,17 @@ function inferFileFormat(filename) {
   return "png";
 }
 
-function resolveNanobanana() {
+function resolveImageAgentPlus() {
   const scriptDir = path.dirname(path.resolve(process.argv[1]));
   const skillDir = path.dirname(scriptDir);
   const baseDir = path.dirname(skillDir);
-  const possibleBin = path.resolve(baseDir, "bin", "nanobanana-plus.js");
+  const possibleBin = path.resolve(baseDir, "bin", "image-agent-plus.js");
 
   if (fs.existsSync(possibleBin)) {
     return possibleBin;
   }
 
-  return "nanobanana-plus";
+  return "image-agent-plus";
 }
 
 function buildCliArgs(command, options) {
@@ -92,6 +93,9 @@ function buildCliArgs(command, options) {
   }
   if (options["aspect-ratio"]) {
     args.push("--aspect-ratio", options["aspect-ratio"]);
+  }
+  if (options.provider) {
+    args.push("--provider", options.provider);
   }
   if (options.model) {
     args.push("--model", options.model);
@@ -111,10 +115,12 @@ function buildCliArgs(command, options) {
 
 async function runCli(command, options) {
   return new Promise((resolve, reject) => {
-    const exePath = resolveNanobanana();
+    const exePath = resolveImageAgentPlus();
     const args = buildCliArgs(command, options);
+    const commandPath = exePath.endsWith(".js") ? process.execPath : exePath;
+    const commandArgs = exePath.endsWith(".js") ? [exePath, ...args] : args;
 
-    const child = spawn(process.execPath, [exePath, ...args], {
+    const child = spawn(commandPath, commandArgs, {
       stdio: ["inherit", "pipe", "pipe"],
       env: process.env,
     });
@@ -135,14 +141,14 @@ async function runCli(command, options) {
     });
 
     child.on("error", (error) => {
-      reject(new Error(`Failed to spawn nanobanana-plus: ${error.message}`));
+      reject(new Error(`Failed to spawn image-agent-plus: ${error.message}`));
     });
 
     child.on("close", (code) => {
       if (code === 0) {
         resolve({ stdout, stderr, code });
       } else {
-        reject(new Error(`nanobanana-plus exited with code ${code}`));
+        reject(new Error(`image-agent-plus exited with code ${code}`));
       }
     });
   });
@@ -157,29 +163,29 @@ async function main() {
   }
 
   if (command === "init") {
-    const exePath = resolveNanobanana();
-    console.log("nanobanana-plus CLI is ready (no server needed).");
+    resolveImageAgentPlus();
+    console.log("image-agent-plus CLI is ready (no server needed).");
     console.log("");
     console.log("Usage:");
     console.log(
-      `  node nanobanana-plus.mjs generate --prompt "a cat" --filename cat.png`,
+      `  node image-agent-plus.mjs generate --prompt "a cat" --filename cat.png`,
     );
     console.log("");
     console.log(
-      "The CLI will use NANOBANANA_GEMINI_API_KEY or GEMINI_API_KEY from environment.",
+      "The CLI prefers Codex/Gemini local runtime. API keys are only for direct provider API mode.",
     );
     return;
   }
 
   if (command === "check") {
-    console.log("nanobanana-plus CLI is available.");
+    console.log("image-agent-plus CLI is available.");
     return;
   }
 
   if (command === "models") {
     console.log("Models (set via --model flag at generate time):");
-    console.log("  gemini-3.1-flash-image-preview  (Nano Banana 2 - default)");
-    console.log("  gemini-3-pro-image-preview     (Nano Banana Pro)");
+    console.log("  gemini-3.1-flash-image-preview  (Gemini image - default)");
+    console.log("  gemini-3-pro-image-preview     (Gemini Pro image)");
     console.log("  imagen-4.0-ultra-generate-001 (Imagen 4 Ultra)");
     console.log("  imagen-4.0-fast-generate-001 (Imagen 4 Fast)");
     return;

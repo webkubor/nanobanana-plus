@@ -1,8 +1,8 @@
 {
-  "name": "nanobanana-mcp-server",
-  "version": "1.5.0",
+  "name": "image-agent-plus-mcp-server",
+  "version": "2.0.0",
   "type": "module",
-  "description": "CLI for Nano Banana image generation",
+  "description": "CLI runtime for local-first image agent workflows",
   "main": "dist/cli-entry.js",
   "scripts": {
     "build": "tsc",

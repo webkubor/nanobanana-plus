@@ -4,12 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type NanoBananaModel =
+export type GeminiImageModel =
   | 'gemini-3.1-flash-image-preview'   // Nano Banana 2 — 快速，默认
   | 'gemini-3-pro-image-preview'        // Nano Banana Pro — 高质量
   | 'gemini-2.5-flash-image'            // Nano Banana v1 — 兼容旧版
   | 'imagen-4.0-ultra-generate-001'    // Imagen 4 Ultra — predict 协议，Pro 专享
   | 'imagen-4.0-fast-generate-001';    // Imagen 4 Fast — predict 协议，Pro 专享
+
+export type ImageProvider = 'gemini' | 'openai';
 
 export type PresetType =
   | 'aureate-tech'    // CortexOS / Webkubor style
@@ -22,8 +24,10 @@ export interface ImageGenerationRequest {
   inputImage?: string;
   outputCount?: number;
   mode: 'generate' | 'edit' | 'restore';
+  // Provider override (per-call)
+  provider?: ImageProvider;
   // Model override (per-call)
-  model?: NanoBananaModel;
+  model?: string;
   // Style preset (predefined high-end aesthetics)
   preset?: PresetType;
   // Aspect ratio (e.g. "16:9", "1:1", "4:3", "9:16")
@@ -52,13 +56,22 @@ export interface ImageGenerationResponse {
 
 export interface AuthConfig {
   apiKey: string;
-  keyType: 'GEMINI_API_KEY' | 'GOOGLE_API_KEY';
+  provider: ImageProvider;
+  keyType: 'GEMINI_API_KEY' | 'GOOGLE_API_KEY' | 'OPENAI_API_KEY';
   source:
+    | 'IMAGE_AGENT_GEMINI_API_KEY'
+    | 'IMAGE_AGENT_GOOGLE_API_KEY'
+    | 'IMAGE_AGENT_OPENAI_API_KEY'
+    | 'IMAGE_AGENT_API_KEYS'
     | 'NANOBANANA_GEMINI_API_KEY'
     | 'NANOBANANA_GOOGLE_API_KEY'
+    | 'NANOBANANA_OPENAI_API_KEY'
     | 'NANOBANANA_API_KEYS'  // 多 key 轮换
     | 'GEMINI_API_KEY'
     | 'GOOGLE_API_KEY'
+    | 'OPENAI_API_KEY'
+    | 'codex_cli'
+    | 'gemini_cli'
     | 'oauth_adc'
     | 'runtime'
     | 'none';
@@ -70,7 +83,8 @@ export interface AuthConfig {
 export interface AuthStatus {
   ready: boolean;
   hasApiKey: boolean;
-  keyType?: 'GEMINI_API_KEY' | 'GOOGLE_API_KEY';
+  provider?: ImageProvider;
+  keyType?: AuthConfig['keyType'];
   source: AuthConfig['source'];
   message: string;
 }

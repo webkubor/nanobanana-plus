@@ -15,18 +15,16 @@ export class FileHandler {
     '..',
     '..',
   );
-  private static readonly OUTPUT_DIR = 'banana-plus';
+  private static readonly OUTPUT_DIR = 'image-agent-plus-output';
   private static readonly SEARCH_PATHS = [
     this.PROJECT_ROOT,
     path.join(this.PROJECT_ROOT, 'images'),
     path.join(this.PROJECT_ROOT, 'input'),
     path.join(this.PROJECT_ROOT, this.OUTPUT_DIR),
-    path.join(this.PROJECT_ROOT, 'nanobanana-output'),
     process.cwd(),
     path.join(process.cwd(), 'images'),
     path.join(process.cwd(), 'input'),
     path.join(process.cwd(), this.OUTPUT_DIR),
-    path.join(process.cwd(), 'nanobanana-output'),
     path.join(process.env.HOME || '~', 'Downloads'),
     path.join(process.env.HOME || '~', 'Desktop'),
   ];

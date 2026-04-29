@@ -1,12 +1,34 @@
 # Changelog
 
-All notable changes to **nanobanana-plus** will be documented here.
+All notable changes to **image-agent-plus** will be documented here.
 
 Format: [Semantic Versioning](https://semver.org/) | Based on [Keep a Changelog](https://keepachangelog.com/)
 
 ---
 
-## [2.0.0] - 2026-04-14
+## [2.0.0] - 2026-04-29
+
+### Breaking Changes
+- Renamed project identity from `nanobanana-plus` to `image-agent-plus`.
+- Renamed npm package and primary CLI binary to `image-agent-plus`.
+- Repositioned the project as a local-first image agent workflow for Codex CLI, Gemini CLI, OpenClaw, and Hermes instead of a Nano Banana-only wrapper.
+
+### Added
+- Local runtime initialization check: detect `codex`, `gemini`, `openclaw`, and `hermes`.
+- Runtime priority: use Codex CLI by default when both Codex and Gemini are installed; fallback to Gemini CLI when Codex is missing.
+- Agent skills:
+  - `image-prompt-refiner`: turns a short image request into a production prompt and asks targeted clarification questions when size/aspect ratio or intent is missing.
+  - `reference-style-transfer`: extracts a reference image style brief for generating a new image with the same visual language.
+- Provider routing for Gemini and OpenAI image models.
+- New `IMAGE_AGENT_*` environment variables, with legacy `NANOBANANA_*` variables retained as fallback reads.
+
+### Changed
+- API keys are no longer treated as the default setup path. Codex CLI and Gemini CLI users should not provide API keys for local agent runtime usage.
+- API keys are documented only as optional direct provider API mode.
+
+---
+
+## [2.0.0-legacy] - 2026-04-14
 
 ### Breaking Changes
 - 移除 HTTP API server（`api` 子命令）

@@ -1,179 +1,138 @@
 <div align="center">
 
-# 🍌 nanobanana-plus
+# image-agent-plus
 
-**One prompt. Any ratio. Any model. No restart.**
+**Local-first image workflow for Codex CLI, Gemini CLI, OpenClaw, and Hermes.**
 
-[中文](./README.zh.md) · [Changelog](./CHANGELOG.md) · [Report Bug](https://github.com/webkubor/nanobanana-plus/issues)
+[Changelog](./CHANGELOG.md) · [Report Bug](https://github.com/webkubor/image-agent-plus/issues)
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](package.json)
-[![Stars](https://img.shields.io/github/stars/webkubor/nanobanana-plus?style=flat&color=yellow)](https://github.com/webkubor/nanobanana-plus/stargazers)
+[![Stars](https://img.shields.io/github/stars/webkubor/image-agent-plus?style=flat&color=yellow)](https://github.com/webkubor/image-agent-plus/stargazers)
 
 </div>
 
 ---
 
-> *"The official nanobanana always outputs a cropped 1:1 square.
-> To change the model you have to restart the whole server.
-> I just wanted a 16:9 wallpaper."*
->
-> — Issue [#44](https://github.com/gemini-cli-extensions/nanobanana/issues/44), 89 thumbs up
+`image-agent-plus` is no longer a Nano Banana-only wrapper. It is a local image-agent toolkit that prefers installed CLI runtimes first:
 
-This fork fixes that. Fork of Google's official [nanobanana](https://github.com/gemini-cli-extensions/nanobanana) — **dynamic model switching + any aspect ratio, per call.**
+- Codex CLI users do not need to provide an API key.
+- Gemini CLI users do not need to provide an API key.
+- OpenClaw and Hermes are detected as agent runtimes.
+- API keys are only for direct provider API mode, or for machines without Codex/Gemini local runtime.
+
+The project still supports Gemini/Nano Banana-compatible model IDs and OpenAI image models as direct provider backends.
 
 ---
 
 ## Install
 
 ```bash
-npm install -g nanobanana-extension
+npm install -g image-agent-plus
 ```
 
-> Already logged in with `gemini auth login`? That's all you need — OAuth is reused automatically.
-
----
-
-## Real output
+## Runtime Check
 
 ```bash
-nanobanana-plus generate \
-  --prompt "a tabby cat sitting on a rainy windowsill, cinematic lighting" \
-  --aspect-ratio 16:9
-# ✅ Saved → /Users/you/tabby-cat-rainy-window.png
+image-agent-plus check
+# codex and gemini are installed. Default runtime: codex.
+# Agent runtimes: openclaw, hermes.
 ```
 
-<details>
-<summary>📸 Demo output (click to expand)</summary>
+Runtime selection:
 
-**nanobanana-plus** — full 16:9 composition preserved:
-![橙色猫咪坐在雨天窗台上](https://raw.githubusercontent.com/webkubor/nanobanana-plus/main/docs/demo-cat-rainy-window.png)
+| Local CLI state | Default runtime |
+|-----------------|-----------------|
+| `codex` and `gemini` installed | `codex` |
+| only `codex` installed | `codex` |
+| only `gemini` installed | `gemini` |
+| `openclaw` installed | exposed as agent runtime |
+| `hermes` installed | exposed as agent runtime |
+| neither `codex` nor `gemini` installed | fail with explicit install/API-mode guidance |
 
-**original nanobanana** — same prompt, always cropped to 1:1 square:
-![CLI 操作截图](https://raw.githubusercontent.com/webkubor/nanobanana-plus/main/docs/demo-cli-output.png)
-
-</details>
-
----
-
-## What's different from upstream
-
-| Feature | nanobanana (official) | nanobanana-plus |
-|---------|:---:|:---:|
-| Aspect ratio | 1:1 only | 16:9 / 9:16 / 4:3 / 3:4 / 21:9 |
-| Switch model per call | ❌ restart required | ✅ `--model` flag |
-| Imagen 4 Ultra / Fast | ❌ | ✅ |
-| Output count (1-8) | ❌ | ✅ `--output-count` |
-| Seed control | ❌ | ✅ `--seed` |
+`generate` runs the same runtime check before image generation.
 
 ---
 
-## Models
+## Generate
 
-No server restart needed — specify per call.
+```bash
+image-agent-plus generate \
+  --prompt "a tabby cat sitting on a rainy windowsill, cinematic lighting" \
+  --provider gemini \
+  --aspect-ratio 16:9
+```
+
+## Providers and Models
+
+No server restart is needed. Provider/model can be selected per call.
+
+| `--provider` | Backend | Default auth path |
+|--------------|---------|-------------------|
+| `gemini` *(default)* | Gemini / Nano Banana-compatible / Imagen models | Gemini CLI OAuth/ADC or optional API key |
+| `openai` | OpenAI GPT Image models | Codex CLI for agent workflow, optional API key for direct HTTP API mode |
 
 | `--model` | Name | Best for |
-|-----------|------|---------|
-| *(default)* | Nano Banana 2 (`gemini-3.1-flash-image-preview`) | ⚡ Daily use, quota-friendly |
-| `gemini-3-pro-image-preview` | Nano Banana Pro | 🎨 High quality, fine detail |
-| `gemini-2.5-flash-image` | Nano Banana v1 | 🔄 Legacy compat |
-| `imagen-4.0-ultra-generate-001` | Imagen 4 Ultra 💎 | Photorealistic (Pro Key required) |
-| `imagen-4.0-fast-generate-001` | Imagen 4 Fast 🚀 | Speed + quality (Pro Key required) |
+|-----------|------|----------|
+| *(default)* | `gemini-3.1-flash-image-preview` | Fast daily generation |
+| `gemini-3-pro-image-preview` | Gemini Pro image | Higher detail |
+| `gemini-2.5-flash-image` | Gemini legacy image | Compatibility |
+| `imagen-4.0-ultra-generate-001` | Imagen 4 Ultra | Photorealistic direct API mode |
+| `imagen-4.0-fast-generate-001` | Imagen 4 Fast | Fast direct API mode |
+| `gpt-image-1.5` | OpenAI GPT Image | Text rendering and instruction following |
+| `gpt-image-1` | OpenAI GPT Image 1 | Stable OpenAI image generation |
+
+Optional direct API env vars:
 
 ```bash
-# Set a global default
-export NANOBANANA_MODEL=gemini-3-pro-image-preview
+export IMAGE_AGENT_MODEL=gemini-3-pro-image-preview
+export IMAGE_AGENT_PROVIDER=openai
+export IMAGE_AGENT_OPENAI_MODEL=gpt-image-1.5
+export IMAGE_AGENT_GEMINI_API_KEY="your_key"      # optional direct Gemini API mode
+export IMAGE_AGENT_OPENAI_API_KEY="your_key"      # optional direct OpenAI API mode
 ```
+
+Legacy `NANOBANANA_*` env vars are still read as fallbacks, but new installs should use `IMAGE_AGENT_*`.
 
 ---
 
-## All options
+## Agent Skills
+
+This package includes agent-facing skills for Codex, OpenClaw, and Hermes:
+
+| Skill | Purpose |
+|-------|---------|
+| `skills/image-prompt-refiner/SKILL.md` | Optimizes a short image request into a production prompt and asks targeted questions when key constraints are missing, especially size/aspect ratio. |
+| `skills/reference-style-transfer/SKILL.md` | Converts a reference image into a style-transfer brief for generating a new image with the same visual language. |
+| `skills/image-agent-plus/SKILL.md` | Calls the local `image-agent-plus` CLI. |
+
+---
+
+## Options
 
 | Flag | Required | Description |
 |------|:--------:|-------------|
-| `--prompt` | ✅ | Describe the image |
-| `--model` | — | Model ID (default: Nano Banana 2) |
-| `--aspect-ratio` | — | `16:9` / `9:16` / `1:1` / `4:3` / `3:4` / `21:9`* |
-| `--output-count` | — | 1–8 images per call (default: 1) |
-| `--filename` | — | Output file path |
-| `--file-format` | — | `png` (default) or `jpeg` |
-| `--seed` | — | Fix random seed for reproducibility |
-| `--preview` / `--no-preview` | — | Toggle preview |
-
-> *`21:9` ultra-wide only supported on Gemini models. See [`docs/compatibility-21-9-matrix.md`](./docs/compatibility-21-9-matrix.md).
+| `--prompt` | yes | Describe the image |
+| `--provider` | no | `gemini` or `openai` |
+| `--model` | no | Provider model ID |
+| `--aspect-ratio` | no | `16:9`, `9:16`, `1:1`, `4:3`, `3:4`, `21:9` |
+| `--output-count` | no | 1-8 images per call |
+| `--filename` | no | Output file path |
+| `--file-format` | no | `png` or `jpeg` |
+| `--seed` | no | Fix random seed for reproducibility |
+| `--preview` / `--no-preview` | no | Toggle preview |
 
 ---
 
-## Gallery
-
-### 💎 Imagen 4 Ultra — photorealistic
+## Development
 
 ```bash
-nanobanana-plus generate \
-  --prompt "majestic snowy mountain peak under a starry night sky, photorealistic, 8K" \
-  --model imagen-4.0-ultra-generate-001 --aspect-ratio 16:9
+git clone https://github.com/webkubor/image-agent-plus
+cd image-agent-plus
+pnpm install
+pnpm run build
 ```
-![Ultra 16:9](https://files.catbox.moe/a7sfh2.png)
-
-### ⚡ Nano Banana 2 — fast daily (default)
-
-```bash
-nanobanana-plus generate \
-  --prompt "cyberpunk city at night, neon lights, rain reflections, cinematic" \
-  --model gemini-3.1-flash-image-preview --aspect-ratio 16:9
-```
-![Nano Banana 16:9](https://files.catbox.moe/kl23ih.png)
-
----
-
-## API Key setup
-
-```bash
-export NANOBANANA_GEMINI_API_KEY="your_key"   # recommended
-export GEMINI_API_KEY="your_key"               # fallback
-export GOOGLE_API_KEY="your_key"               # fallback
-```
-
-> Already logged in with Gemini CLI? OAuth session is reused — no key needed.
-
----
-
-## Aspect ratio quick reference
-
-| Ratio | Use case |
-|-------|---------|
-| `16:9` | 🖥️ Desktop wallpaper / YouTube thumbnail / blog header |
-| `9:16` | 📱 Phone wallpaper / Reels / Stories |
-| `1:1` | ⬜ Avatar / Instagram / WeChat article |
-| `4:3` | 🖼️ Classic landscape / presentation |
-| `3:4` | 📄 Classic portrait / poster |
-| `21:9` | 🎬 Cinematic ultrawide |
-
----
-
-## Contributing
-
-PRs welcome. Most wanted:
-
-- 🎨 **Style presets** — ink wash, ukiyo-e, cyberpunk as built-in prompt prefixes
-- 🔁 **Model comparison** — render same prompt with flash + pro side by side
-- 📊 **Quota tracker** — alert when approaching API limits
-
-```bash
-git clone https://github.com/webkubor/nanobanana-plus
-cd nanobanana-plus && pnpm install && pnpm run dev
-```
-
----
 
 ## License
 
-Apache License 2.0 — Fork of [nanobanana](https://github.com/gemini-cli-extensions/nanobanana) by Google LLC.
-
----
-
-<div align="center">
-
-**If this saved you a restart, leave a ⭐**
-
-</div>
+Apache License 2.0. Fork lineage includes Google's original [nanobanana](https://github.com/gemini-cli-extensions/nanobanana).

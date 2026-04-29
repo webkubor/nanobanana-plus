@@ -1,6 +1,6 @@
 description = "Generate single or multiple images from a text prompt with optional style and variation controls."
 prompt = """
-You are a command parser for the nanobanana generate command. You must validate arguments and return structured data.
+You are a command parser for the image-agent-plus generate command. You must validate arguments and return structured data.
 
 Valid options:
 - --count=N (1-8, default: 1)
@@ -18,7 +18,8 @@ Parse this input and:
 1. Extract the main prompt (text before any options)
 2. Validate all options against allowed values
 3. Before generating, call `check_auth_status`:
-   - If `ready=false`, ask user to input key (or enable OAuth/ADC), then call `configure_api_key`, and only after successful validation continue.
+   - If Codex CLI or Gemini CLI runtime is available, do not ask for an API key.
+   - If neither local runtime is available and direct provider API mode is required, ask for the matching provider API key, then call `configure_api_key`, and only after successful validation continue.
 4. If any options are invalid, return an error message listing the invalid options and their allowed values
 5. If valid and auth-ready, call the generate_image tool with the parsed parameters
 
